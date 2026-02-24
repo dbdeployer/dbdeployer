@@ -20,8 +20,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/datacharmer/dbdeployer/common"
-	"github.com/datacharmer/dbdeployer/compare"
+	"github.com/dbdeployer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/compare"
 )
 
 type boolMap map[bool]string

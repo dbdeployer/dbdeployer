@@ -13,7 +13,7 @@ Running with `-v` will be **very** verbose.
 
 ## Test initialization
 
-The test will perform several initializations before running. If the environment is ready (`$SANDBOX_BINARY` and `$SANDBOX_HOME` created) it will skip the initialization. Otherwise, it will run [`dbdeployer init`](https://github.com/datacharmer/dbdeployer/wiki/initializing-the-environment).
+The test will perform several initializations before running. If the environment is ready (`$SANDBOX_BINARY` and `$SANDBOX_HOME` created) it will skip the initialization. Otherwise, it will run [`dbdeployer init`](https://github.com/dbdeployer/dbdeployer/wiki/initializing-the-environment).
 
 Furthermore, the test will download the necessary database binaries for all the required versions.
 By default, the versions being used are: 4.1, 5.0, 5.1, 5.5, 5.6, 5.7, 8.0

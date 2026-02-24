@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/datacharmer/dbdeployer/common"
-	"github.com/datacharmer/dbdeployer/globals"
+	"github.com/dbdeployer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/globals"
 )
 
 func gUnzipData(data []byte) (resData []byte, err error) {

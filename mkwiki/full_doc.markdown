@@ -1,10 +1,10 @@
 # dbdeployer
-[DBdeployer](https://github.com/datacharmer/dbdeployer) is a tool that deploys MySQL database servers easily.
-This is a port of [MySQL-Sandbox](https://github.com/datacharmer/mysql-sandbox), originally written in Perl, and re-designed from the ground up in [Go](https://golang.org). See the [features comparison](https://github.com/datacharmer/dbdeployer/blob/master/docs/features.md) for more detail.
+[DBdeployer](https://github.com/dbdeployer/dbdeployer) is a tool that deploys MySQL database servers easily.
+This is a port of [MySQL-Sandbox](https://github.com/datacharmer/mysql-sandbox), originally written in Perl, and re-designed from the ground up in [Go](https://golang.org). See the [features comparison](https://github.com/dbdeployer/dbdeployer/blob/master/docs/features.md) for more detail.
 
 Documentation updated for version 1.66.0 (26-Jul-2022 13:24 UTC)
 
-![Build Status](https://github.com/datacharmer/dbdeployer/workflows/.github/workflows/all_tests.yml/badge.svg)
+![Build Status](https://github.com/dbdeployer/dbdeployer/workflows/.github/workflows/all_tests.yml/badge.svg)
 
 - [Installation](#installation)
     - [Manual installation](#manual-installation)
@@ -75,14 +75,14 @@ Documentation updated for version 1.66.0 (26-Jul-2022 13:24 UTC)
 ## Manual installation
 
 The installation is simple, as the only thing you will need is a binary executable for your operating system.
-Get the one for your O.S. from [dbdeployer releases](https://github.com/datacharmer/dbdeployer/releases) and place it in a directory in your $PATH.
-(There are no binaries for Windows. See the [features list](https://github.com/datacharmer/dbdeployer/blob/master/docs/features.md) for more info.)
+Get the one for your O.S. from [dbdeployer releases](https://github.com/dbdeployer/dbdeployer/releases) and place it in a directory in your $PATH.
+(There are no binaries for Windows. See the [features list](https://github.com/dbdeployer/dbdeployer/blob/master/docs/features.md) for more info.)
 
 For example:
 
     $ VERSION=1.66.0
     $ OS=linux
-    $ origin=https://github.com/datacharmer/dbdeployer/releases/download/v$VERSION
+    $ origin=https://github.com/dbdeployer/dbdeployer/releases/download/v$VERSION
     $ wget $origin/dbdeployer-$VERSION.$OS.tar.gz
     $ tar -xzf dbdeployer-$VERSION.$OS.tar.gz
     $ chmod +x dbdeployer-$VERSION.$OS
@@ -933,7 +933,7 @@ If you don't need the customized list any longer, you can remove it using `dbdep
 
 ## Changing the tarball list permanently
 
-Adding tarballs to a personal list could be time consuming, if you need to do it often. A better way is to clone this repository, then modify the [original list](https://github.com/datacharmer/dbdeployer/blob/master/downloads/tarball_list.json), and then open a pull request with the changes. The list is used when building dbdeployer, as the contents of the JSON file are converted into an internal list.
+Adding tarballs to a personal list could be time consuming, if you need to do it often. A better way is to clone this repository, then modify the [original list](https://github.com/dbdeployer/dbdeployer/blob/master/downloads/tarball_list.json), and then open a pull request with the changes. The list is used when building dbdeployer, as the contents of the JSON file are converted into an internal list.
 
 When entering a new tarball, it is important to fill all the details needed to identify the download. The checksum field is very important. as it is what makes sure that the file downloaded is really the original one.
 
@@ -2424,14 +2424,14 @@ $ ~/sandboxes/msb_8_0_17/clone_from rsandbox_8_0_17
 Should you need to compile your own binaries for dbdeployer, follow these steps:
 
 1. Make sure you have go 1.11+ installed in your system.
-2. Run `git clone https://github.com/datacharmer/dbdeployer.git`.  This will import all the code that is needed to build dbdeployer.
+2. Run `git clone https://github.com/dbdeployer/dbdeployer.git`.  This will import all the code that is needed to build dbdeployer.
 3. Change directory to `./dbdeployer`.
 4. Run ./scripts/build.sh {linux|OSX}`
 5. If you need the docs enabled binaries (see the section "Generating additional documentation") run `MKDOCS=1 ./scripts/build.sh {linux|OSX}`
 
 # Generating additional documentation
 
-Between this file and [the API API list](https://github.com/datacharmer/dbdeployer/blob/master/docs/API/API-1.1.md), you have all the existing documentation for dbdeployer.
+Between this file and [the API API list](https://github.com/dbdeployer/dbdeployer/blob/master/docs/API/API-1.1.md), you have all the existing documentation for dbdeployer.
 Should you need additional formats, though, dbdeployer is able to generate them on-the-fly. Tou will need the docs-enabled binaries: in the distribution list, you will find:
 
 * dbdeployer-1.66.0-docs.linux.tar.gz
@@ -2502,7 +2502,7 @@ When completion is enabled, you can use it as follows:
 
 # Using dbdeployer source for other projects
 
-If you need to create sandboxes from other Go apps, see  [dbdeployer-as-library.md](https://github.com/datacharmer/dbdeployer/blob/master/docs/coding/dbdeployer-as-library.md).
+If you need to create sandboxes from other Go apps, see  [dbdeployer-as-library.md](https://github.com/dbdeployer/dbdeployer/blob/master/docs/coding/dbdeployer-as-library.md).
 
 # Exporting dbdeployer structure
 
@@ -2534,8 +2534,8 @@ As of version 1.0.0, dbdeployer adheres to the principles of [semantic versionin
 * Backward-compatible new features increment the **Minor** number.
 * Backward incompatible changes (either features or bug fixes that break compatibility with the API) increment the **Major** number.
 
-The starting API is defined in [API-1.0.md](https://github.com/datacharmer/dbdeployer/blob/master/docs/API/API-1.0.md) (generated manually.)
-The file [API-1.1.md](https://github.com/datacharmer/dbdeployer/blob/master/docs/API/API-1.1.md) contains the same API definition, but was generated automatically and can be used to better compare the initial API with further version.
+The starting API is defined in [API-1.0.md](https://github.com/dbdeployer/dbdeployer/blob/master/docs/API/API-1.0.md) (generated manually.)
+The file [API-1.1.md](https://github.com/dbdeployer/dbdeployer/blob/master/docs/API/API-1.1.md) contains the same API definition, but was generated automatically and can be used to better compare the initial API with further version.
 
 
 # Do not edit

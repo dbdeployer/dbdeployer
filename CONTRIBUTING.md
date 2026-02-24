@@ -8,7 +8,7 @@ The following guidelines want to help and simplify the process of contributing t
 
 1. Contributions should follow the classic GitHub workflow, i.e. forking, cloning, then submitting a Pull Request (PR) 
 with the code that you propose.
-2. Every new feature or bug fix should have an [issue](https://github.com/datacharmer/dbdeployer/issues), where the 
+2. Every new feature or bug fix should have an [issue](https://github.com/dbdeployer/dbdeployer/issues), where the 
 improvement gets discussed before any code is written.
 3. If the contribution is a quick fix, such as a grammar or spelling mistake, go right ahead and submit a PR.
 4. A new feature should either have tests associated to it or state a very good reason for why not.

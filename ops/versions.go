@@ -18,7 +18,7 @@ package ops
 import (
 	"fmt"
 
-	"github.com/datacharmer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/common"
 )
 
 type VersionOptions struct {

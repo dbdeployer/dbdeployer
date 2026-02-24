@@ -18,8 +18,9 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/datacharmer/dbdeployer/common"
 	"os"
+
+	"github.com/dbdeployer/dbdeployer/common"
 )
 
 /*

@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/datacharmer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/common"
 )
 
 func customConditions(condition string) (bool, error) {

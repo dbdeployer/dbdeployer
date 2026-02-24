@@ -233,7 +233,7 @@
 
 ## BUGS FIXED
 
-*  (@ogrovlen) [Allow other custom mysqld than mysqld-debug](https://github.com/datacharmer/dbdeployer/pull/135)
+*  (@ogrovlen) [Allow other custom mysqld than mysqld-debug](https://github.com/dbdeployer/dbdeployer/pull/135)
 
 ## 1.59.0	27-Feb-2021
 

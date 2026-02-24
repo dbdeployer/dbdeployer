@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/datacharmer/dbdeployer/cookbook"
-	"github.com/datacharmer/dbdeployer/globals"
+	"github.com/dbdeployer/dbdeployer/cookbook"
+	"github.com/dbdeployer/dbdeployer/globals"
 	"github.com/spf13/cobra"
 )
 

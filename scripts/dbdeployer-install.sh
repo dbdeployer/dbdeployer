@@ -109,7 +109,7 @@ then
 fi
 
 # Base URL for dbdeployer downloads
-origin=https://github.com/datacharmer/dbdeployer/releases/download/v${dbdeployer_version}
+origin=https://github.com/dbdeployer/dbdeployer/releases/download/v${dbdeployer_version}
 
 # Name of the archive we are looking for
 filename=dbdeployer-${dbdeployer_version}.${OS}.tar.gz

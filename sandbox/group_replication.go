@@ -23,10 +23,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/datacharmer/dbdeployer/common"
-	"github.com/datacharmer/dbdeployer/concurrent"
-	"github.com/datacharmer/dbdeployer/defaults"
-	"github.com/datacharmer/dbdeployer/globals"
+	"github.com/dbdeployer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/concurrent"
+	"github.com/dbdeployer/dbdeployer/defaults"
+	"github.com/dbdeployer/dbdeployer/globals"
 	"github.com/dustin/go-humanize/english"
 	"github.com/pkg/errors"
 )

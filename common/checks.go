@@ -31,7 +31,7 @@ import (
 	"github.com/araddon/dateparse"
 	"github.com/pkg/errors"
 
-	"github.com/datacharmer/dbdeployer/globals"
+	"github.com/dbdeployer/dbdeployer/globals"
 )
 
 type SandboxInfo struct {

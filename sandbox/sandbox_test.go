@@ -22,10 +22,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/datacharmer/dbdeployer/common"
-	"github.com/datacharmer/dbdeployer/compare"
-	"github.com/datacharmer/dbdeployer/defaults"
-	"github.com/datacharmer/dbdeployer/globals"
+	"github.com/dbdeployer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/compare"
+	"github.com/dbdeployer/dbdeployer/defaults"
+	"github.com/dbdeployer/dbdeployer/globals"
 )
 
 func okPortExists(t *testing.T, dirName string, port int) {

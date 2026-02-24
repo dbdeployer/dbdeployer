@@ -23,10 +23,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/datacharmer/dbdeployer/common"
-	"github.com/datacharmer/dbdeployer/downloads"
-	"github.com/datacharmer/dbdeployer/globals"
-	"github.com/datacharmer/dbdeployer/rest"
+	"github.com/dbdeployer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/downloads"
+	"github.com/dbdeployer/dbdeployer/globals"
+	"github.com/dbdeployer/dbdeployer/rest"
 	"github.com/dustin/go-humanize"
 )
 

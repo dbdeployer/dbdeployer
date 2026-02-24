@@ -17,10 +17,11 @@ package abbreviations
 
 import (
 	"fmt"
-	"github.com/datacharmer/dbdeployer/common"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/dbdeployer/dbdeployer/common"
 )
 
 /*

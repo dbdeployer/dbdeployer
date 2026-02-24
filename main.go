@@ -18,8 +18,8 @@ package main
 import (
 	"os"
 
-	"github.com/datacharmer/dbdeployer/abbreviations"
-	"github.com/datacharmer/dbdeployer/cmd"
+	"github.com/dbdeployer/dbdeployer/abbreviations"
+	"github.com/dbdeployer/dbdeployer/cmd"
 )
 
 func main() {

@@ -139,7 +139,7 @@ function check_static {
         for dir in ${local_items[*]}
         do
             echo "# $dir"
-            run staticcheck github.com/datacharmer/dbdeployer/$dir
+            run staticcheck github.com/dbdeployer/dbdeployer/$dir
         done
     fi
 }

@@ -21,9 +21,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/datacharmer/dbdeployer/common"
-	"github.com/datacharmer/dbdeployer/defaults"
-	"github.com/datacharmer/dbdeployer/downloads"
+	"github.com/dbdeployer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/defaults"
+	"github.com/dbdeployer/dbdeployer/downloads"
 	"github.com/stretchr/testify/require"
 )
 

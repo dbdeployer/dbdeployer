@@ -16,10 +16,11 @@
 package abbreviations
 
 import (
-	"github.com/datacharmer/dbdeployer/common"
-	"github.com/datacharmer/dbdeployer/compare"
 	"os"
 	"testing"
+
+	"github.com/dbdeployer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/compare"
 )
 
 func TestLoadAbbreviations(t *testing.T) {

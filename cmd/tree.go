@@ -25,8 +25,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/datacharmer/dbdeployer/common"
-	"github.com/datacharmer/dbdeployer/globals"
+	"github.com/dbdeployer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/globals"
 )
 
 func writeApi(showHidden bool) {

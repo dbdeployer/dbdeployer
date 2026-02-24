@@ -21,7 +21,7 @@ package sandbox
 import (
 	_ "embed"
 
-	"github.com/datacharmer/dbdeployer/globals"
+	"github.com/dbdeployer/dbdeployer/globals"
 )
 
 //go:embed templates/ndb/ndb_start_cluster.gotxt

@@ -5,7 +5,7 @@ If you want to create a MySQL sandbox from your application, you need to fill in
 
 ```go    
 
-import "github.com/datacharmer/dbdeployer/sandbox"
+import "github.com/dbdeployer/dbdeployer/sandbox"
 
 var sdef =	sandbox.SandboxDef{
 	 Version: "5.7.22",

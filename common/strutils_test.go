@@ -17,11 +17,12 @@ package common
 
 import (
 	"fmt"
-	"github.com/datacharmer/dbdeployer/compare"
-	"github.com/datacharmer/dbdeployer/globals"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/dbdeployer/dbdeployer/compare"
+	"github.com/dbdeployer/dbdeployer/globals"
 )
 
 type pathInfo struct {

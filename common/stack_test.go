@@ -17,8 +17,9 @@ package common
 
 import (
 	"fmt"
-	"github.com/datacharmer/dbdeployer/compare"
 	"testing"
+
+	"github.com/dbdeployer/dbdeployer/compare"
 )
 
 func TestStack(t *testing.T) {

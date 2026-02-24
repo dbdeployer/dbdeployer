@@ -1,6 +1,6 @@
 # dbdeployer features
 
-This table compares features from [MySQL-Sandbox](https://github.com/datacharmer/mysql-sandbox) and [dbdeployer](https://github.com/datacharmer/dbdeployer).
+This table compares features from [MySQL-Sandbox](https://github.com/datacharmer/mysql-sandbox) and [dbdeployer](https://github.com/dbdeployer/dbdeployer).
 
 Feature                     | MySQL-Sandbox   | dbdeployer    | dbdeployer planned
 --------------------------- | :-------------- | :------------ | :-----------------

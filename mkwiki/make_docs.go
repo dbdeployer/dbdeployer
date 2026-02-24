@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/datacharmer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/common"
 )
 
 func getCmdOutput(cmdText string) string {
@@ -93,7 +93,7 @@ func main() {
 	defer fullDoc.Close()
 	header1 := ""
 	header1Name := ""
-	wikiBaseUrl := "https://github.com/datacharmer/dbdeployer/wiki"
+	wikiBaseUrl := "https://github.com/dbdeployer/dbdeployer/wiki"
 
 	fmt.Fprintf(homeFile, "# dbdeployer\n")
 	fmt.Fprintf(fullDoc, "# dbdeployer\n")
@@ -170,7 +170,7 @@ func main() {
 			} else {
 				fmt.Fprintf(header1File, "%s\n", line)
 				if addHomeLink {
-					fmt.Fprintf(header1File, "[[HOME](https://github.com/datacharmer/dbdeployer/wiki)]\n")
+					fmt.Fprintf(header1File, "[[HOME](https://github.com/dbdeployer/dbdeployer/wiki)]\n")
 					addHomeLink = false
 				}
 			}

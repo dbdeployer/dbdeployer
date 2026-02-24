@@ -18,10 +18,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/datacharmer/dbdeployer/common"
-	"github.com/datacharmer/dbdeployer/compare"
-	"github.com/datacharmer/dbdeployer/defaults"
-	"github.com/datacharmer/dbdeployer/sandbox"
+	"github.com/dbdeployer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/compare"
+	"github.com/dbdeployer/dbdeployer/defaults"
+	"github.com/dbdeployer/dbdeployer/sandbox"
 )
 
 func TestGetLatestVersion(t *testing.T) {
