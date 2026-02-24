@@ -1,18 +1,3 @@
-// DBDeployer - The MySQL Sandbox
-// Copyright © 2006-2021 Giuseppe Maxia
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package sandbox
 
 import (
@@ -31,71 +16,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func getBaseMysqlxPort(basePort int, sdef SandboxDef, nodes int) (int, error) {
-	baseMysqlxPort := basePort + defaults.Defaults().MysqlXPortDelta
-	// 8.0.11
-	// isMinimumMySQLXDefault, err := common.GreaterOrEqualVersion(sdef.Version, globals.MinimumMysqlxDefaultVersion)
-	isMinimumMySQLXDefault, err := common.HasCapability(sdef.Flavor, common.MySQLX, sdef.Version)
-	if err != nil {
-		return 0, err
-	}
-	if isMinimumMySQLXDefault {
-		// FindFreePort returns the first free port, but base_port will be used
-		// with a counter. Thus the availability will be checked using
-		// "base_port + 1"
-		firstGroupPort, err := common.FindFreePort(baseMysqlxPort+1, sdef.InstalledPorts, nodes)
-		if err != nil {
-			return -1, errors.Wrapf(err, "error finding a free port for MySQLX")
-		}
-		baseMysqlxPort = firstGroupPort - 1
-		for N := 1; N <= nodes; N++ {
-			checkPort := baseMysqlxPort + N
-			err = checkPortAvailability("get_base_mysqlx_port", sdef.SandboxDir, sdef.InstalledPorts, checkPort)
-			if err != nil {
-				return 0, err
-			}
-		}
-	}
-	return baseMysqlxPort, nil
-}
-
-func getBaseAdminPort(basePort int, sdef SandboxDef, nodes int) (int, error) {
-	baseAdminPort := basePort + defaults.Defaults().AdminPortDelta
-	if !sdef.EnableAdminAddress {
-		return basePort, nil
-	}
-	// 8.0.14
-	isMinimumAdminAddress, err := common.HasCapability(sdef.Flavor, common.AdminAddress, sdef.Version)
-	if err != nil {
-		return 0, err
-	}
-	if !isMinimumAdminAddress {
-		return 0, fmt.Errorf(globals.ErrFeatureRequiresCapability,
-			globals.EnableAdminAddressLabel,
-			common.MySQLFlavor,
-			common.IntSliceToDottedString(globals.MinimumAdminAddressVersion))
-	}
-	if isMinimumAdminAddress {
-		// FindFreePort returns the first free port, but base_port will be used
-		// with a counter. Thus the availability will be checked using
-		// "base_port + 1"
-		firstAdminPort, err := common.FindFreePort(baseAdminPort+1, sdef.InstalledPorts, nodes)
-		if err != nil {
-			return -1, errors.Wrapf(err, "error finding a free admin port")
-		}
-		baseAdminPort = firstAdminPort - 1
-		for N := 1; N <= nodes; N++ {
-			checkPort := baseAdminPort + N
-			err := checkPortAvailability("get_base_admin_port", sdef.SandboxDir, sdef.InstalledPorts, checkPort)
-			if err != nil {
-				return 0, err
-			}
-		}
-	}
-	return baseAdminPort, nil
-}
-
-func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, masterIp string) error {
+func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes int, masterIp string) error {
 	var execLists []concurrent.ExecutionList
 	var err error
 
@@ -105,7 +26,7 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 	} else {
 		var fileName string
 		var err error
-		logger, fileName, err = defaults.NewLogger(common.LogDirName(), "group-replication")
+		logger, fileName, err = defaults.NewLogger(common.LogDirName(), "innodb-cluster")
 		if err != nil {
 			return err
 		}
@@ -117,8 +38,8 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 		return err
 	}
 	if readOnlyOptions != "" {
-		return fmt.Errorf("options --read-only and --super-read-only can't be used for group topology\n" +
-			"as the group replication software sets it when needed")
+		return fmt.Errorf("options --read-only and --super-read-only can't be used for InnoDB Cluster topology\n" +
+			"as the InnoDB Cluster sets it when needed")
 	}
 
 	vList, err := common.VersionToList(sandboxDef.Version)
@@ -127,6 +48,10 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 	}
 	rev := vList[2]
 	shortVersion := fmt.Sprintf("%d.%d", vList[0], vList[1])
+	if strings.HasPrefix(shortVersion, "5") {
+		return fmt.Errorf("InnoDB Cluster is not supported for MySQL 5.7 or below")
+	}
+
 	basePort := computeBaseport(sandboxDef.Port + defaults.Defaults().GroupReplicationBasePort + (rev * 100))
 	if sandboxDef.SinglePrimary {
 		basePort = sandboxDef.Port + defaults.Defaults().GroupReplicationSpBasePort + (rev * 100)
@@ -160,13 +85,13 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 	}
 	baseGroupPort = firstGroupPort - 1
 	for checkPort := basePort + 1; checkPort < basePort+nodes+1; checkPort++ {
-		err = checkPortAvailability("CreateGroupReplication", sandboxDef.SandboxDir, sandboxDef.InstalledPorts, checkPort)
+		err = checkPortAvailability("CreateInnoDBClusterReplication", sandboxDef.SandboxDir, sandboxDef.InstalledPorts, checkPort)
 		if err != nil {
 			return err
 		}
 	}
 	for checkPort := baseGroupPort + 1; checkPort < baseGroupPort+nodes+1; checkPort++ {
-		err = checkPortAvailability("CreateGroupReplication-group", sandboxDef.SandboxDir, sandboxDef.InstalledPorts, checkPort)
+		err = checkPortAvailability("CreateInnoDBClusterReplication-cluster", sandboxDef.SandboxDir, sandboxDef.InstalledPorts, checkPort)
 		if err != nil {
 			return err
 		}
@@ -232,6 +157,7 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 		"SlaveList":         slaveList,
 		"RplUser":           sandboxDef.RplUser,
 		"RplPassword":       sandboxDef.RplPassword,
+		"DbPassword":        sandboxDef.DbPassword,
 		"SlaveLabel":        slaveLabel,
 		"SlaveAbbr":         slaveAbbr,
 		"ChangeMasterExtra": changeMasterExtra,
@@ -250,12 +176,7 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 	}
 	logger.Printf("Creating connection string %s\n", connectionString)
 
-	sbType := "group-multi-primary"
-	singlePrimaryMode := "off"
-	if sandboxDef.SinglePrimary {
-		sbType = "group-single-primary"
-		singlePrimaryMode = "on"
-	}
+	sbType := "innodb-cluster"
 	logger.Printf("Defining group type %s\n", sbType)
 
 	sbDesc := common.SandboxDescription{
@@ -329,15 +250,10 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 			"BasePort":       basePortText,
 			"GroupSeeds":     connectionString,
 			"LocalAddresses": fmt.Sprintf("%s:%d", masterIp, groupPort),
-			"PrimaryMode":    singlePrimaryMode,
 		}
 
-		tmplGroup := globals.TmplGroupReplOptions84
-		if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-			tmplGroup = globals.TmplGroupReplOptions
-		}
 		replOptionsText, err := common.SafeTemplateFill("group_replication",
-			GroupTemplates[tmplGroup].Contents, replicationData)
+			ClusterTemplates[globals.TmplClusterOptions].Contents, replicationData)
 		if err != nil {
 			return err
 		}
@@ -375,7 +291,7 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 		sandboxDef.Multi = true
 		sandboxDef.LoadGrants = true
 		sandboxDef.Prompt = fmt.Sprintf("%s%d", nodeLabel, i)
-		sandboxDef.SBType = "group-node"
+		sandboxDef.SBType = "cluster-node"
 		sandboxDef.NodeNum = i
 		// common.CondPrintf("%#v\n",sdef)
 		logger.Printf("Create single sandbox for node %d\n", i)
@@ -466,19 +382,14 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 		},
 	}
 
-	tmplInitNodes := globals.TmplInitNodes84
-	if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-		tmplInitNodes = globals.TmplInitNodes
-	}
-
 	sbGroup := ScriptBatch{
-		tc:         GroupTemplates,
+		tc:         ClusterTemplates,
 		logger:     logger,
 		data:       data,
 		sandboxDir: sandboxDef.SandboxDir,
 		scripts: []ScriptDef{
-			{globals.ScriptInitializeNodes, tmplInitNodes, true},
-			{globals.ScriptCheckNodes, globals.TmplCheckNodes, true},
+			{globals.ScriptInitializeNodesCluster, globals.TmplInitializeNodesCluster, true},
+			{globals.ScriptCheckNodesCluster, globals.TmplCheckClusterNodes, true},
 		},
 	}
 
@@ -500,9 +411,9 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 	logger.Printf("Running parallel tasks\n")
 	concurrent.RunParallelTasksByPriority(execLists)
 	if !sandboxDef.SkipStart {
-		common.CondPrintln(path.Join(common.ReplaceLiteralHome(sandboxDef.SandboxDir), globals.ScriptInitializeNodes))
+		common.CondPrintln(path.Join(common.ReplaceLiteralHome(sandboxDef.SandboxDir), globals.ScriptInitializeNodesCluster))
 		logger.Printf("Running group replication initialization script\n")
-		_, err := common.RunCmd(path.Join(sandboxDef.SandboxDir, globals.ScriptInitializeNodes))
+		_, err := common.RunCmd(path.Join(sandboxDef.SandboxDir, globals.ScriptInitializeNodesCluster))
 		if err != nil {
 			return fmt.Errorf("error initializing group replication: %s", err)
 		}
