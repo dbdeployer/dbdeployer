@@ -176,8 +176,10 @@ const (
 	TmplGroupReplOptions84 = "group_repl_options84"
 
 	// cluster
-	TmplClusterOptions         = "cluster_options"
-	TmplClusterOptions84       = "cluster_options84"
-	TmplInitializeNodesCluster = "initialize_nodes_cluster"
-	TmplCheckClusterNodes      = "check_nodes_cluster"
+	TmplClusterOptions           = "cluster_options"
+	TmplClusterOptions84         = "cluster_options84"
+	TmplInitializeNodesCluster   = "initialize_nodes_cluster"
+	TmplCheckClusterNodes        = "check_nodes_cluster"
+	TmplWipeAndRestartAllCluster = "wipe_and_restart_all_cluster"
+	TmplStartAllCluster          = "start_all_cluster"
 )

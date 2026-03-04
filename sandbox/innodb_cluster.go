@@ -12,7 +12,6 @@ import (
 	"github.com/datacharmer/dbdeployer/concurrent"
 	"github.com/datacharmer/dbdeployer/defaults"
 	"github.com/datacharmer/dbdeployer/globals"
-	"github.com/dustin/go-humanize/english"
 	"github.com/pkg/errors"
 )
 
@@ -346,13 +345,6 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 		return errors.Wrapf(err, "unable to update catalog")
 	}
 
-	slavePlural := english.PluralWord(2, slaveLabel, "")
-	masterPlural := english.PluralWord(2, masterLabel, "")
-	useAllMasters := "use_all_" + masterPlural
-	useAllSlaves := "use_all_" + slavePlural
-	execAllSlaves := "exec_all_" + slavePlural
-	execAllMasters := "exec_all_" + masterPlural
-
 	logger.Printf("Writing group replication scripts\n")
 	sbMultiple := ScriptBatch{
 		tc:         MultipleTemplates,
@@ -361,7 +353,6 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 		sandboxDir: sandboxDef.SandboxDir,
 		scripts: []ScriptDef{
 			{globals.ScriptStartAll, globals.TmplStartMulti, true},
-			{globals.ScriptRestartAll, globals.TmplRestartMulti, true},
 			{globals.ScriptStatusAll, globals.TmplStatusMulti, true},
 			{globals.ScriptTestSbAll, globals.TmplTestSbMulti, true},
 			{globals.ScriptStopAll, globals.TmplStopMulti, true},
@@ -375,22 +366,8 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 			{globals.ScriptExecAll, globals.TmplExecMulti, true},
 		},
 	}
-	sbRepl := ScriptBatch{
-		tc:         ReplicationTemplates,
-		logger:     logger,
-		data:       data,
-		sandboxDir: sandboxDef.SandboxDir,
-		scripts: []ScriptDef{
-			{useAllSlaves, globals.TmplMultiSourceUseSlaves, true},
-			{useAllMasters, globals.TmplMultiSourceUseMasters, true},
-			{execAllMasters, globals.TmplMultiSourceExecMasters, true},
-			{execAllSlaves, globals.TmplMultiSourceExecSlaves, true},
-			{globals.ScriptTestReplication, globals.TmplMultiSourceTest, true},
-			{globals.ScriptWipeRestartAll, globals.TmplWipeAndRestartAll, true},
-		},
-	}
 
-	sbGroup := ScriptBatch{
+	sbInnoDB := ScriptBatch{
 		tc:         ClusterTemplates,
 		logger:     logger,
 		data:       data,
@@ -398,10 +375,12 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 		scripts: []ScriptDef{
 			{globals.ScriptInitializeNodesCluster, globals.TmplInitializeNodesCluster, true},
 			{globals.ScriptCheckNodesCluster, globals.TmplCheckClusterNodes, true},
+			{globals.ScriptWipeRestartAll, globals.TmplWipeAndRestartAllCluster, true},
+			{globals.ScriptStartAll, globals.TmplStartAllCluster, true},
 		},
 	}
 
-	for _, sb := range []ScriptBatch{sbMultiple, sbRepl, sbGroup} {
+	for _, sb := range []ScriptBatch{sbMultiple, sbInnoDB} {
 		err := writeScripts(sb)
 		if err != nil {
 			return err

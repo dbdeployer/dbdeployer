@@ -39,6 +39,12 @@ var (
 	//go:embed templates/cluster/check_nodes_cluster.gotxt
 	checkClusterNodesTemplate string
 
+	//go:embed templates/cluster/wipe_and_restart_all.gotxt
+	clusterWipeAndRestartAllTemplate string
+
+	//go:embed templates/cluster/start_all.gotxt
+	clusterStartAllTemplate string
+
 	ClusterTemplates = TemplateCollection{
 		globals.TmplClusterOptions: TemplateDesc{
 			Description: "Set the correct my.cnf configurations",
@@ -59,6 +65,16 @@ var (
 			Description: "Checks the status of group replication",
 			Notes:       "",
 			Contents:    checkClusterNodesTemplate,
+		},
+		globals.TmplWipeAndRestartAllCluster: TemplateDesc{
+			Description: "Wipe and restart all nodes in a InnoDB Cluster",
+			Notes:       "",
+			Contents:    clusterWipeAndRestartAllTemplate,
+		},
+		globals.TmplStartAllCluster: TemplateDesc{
+			Description: "Start all nodes in a InnoDB Cluster",
+			Notes:       "",
+			Contents:    clusterStartAllTemplate,
 		},
 	}
 )
