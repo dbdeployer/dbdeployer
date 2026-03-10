@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # DBDeployer - The MySQL Sandbox
 # Copyright © 2006-2020 Giuseppe Maxia
+# Copyright © 2025-2026 Roberto Garcia de Bem
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
