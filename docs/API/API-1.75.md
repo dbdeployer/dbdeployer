@@ -415,7 +415,7 @@ dbdeployer 1.69.0 as of 27-Aug-2022 09:25 UTC
           --completion-file string   Use this file as completion
       -h, --help                     help for enable-bash-completion
           --remote                   Download dbdeployer_completion.sh from GitHub
-          --remote-url string        Where to downloads dbdeployer_completion.sh from (default "https://raw.githubusercontent.com/datacharmer/dbdeployer/master/docs/dbdeployer_completion.sh")
+          --remote-url string        Where to downloads dbdeployer_completion.sh from (default "https://raw.githubusercontent.com/dbdeployer/dbdeployer/master/docs/dbdeployer_completion.sh")
           --run-it                   Run the command instead of just showing it
     
     

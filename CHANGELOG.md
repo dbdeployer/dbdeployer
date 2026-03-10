@@ -1,3 +1,11 @@
+## 1.75.2	04-Mar-2026
+
+## ADJUSTMENTS
+
+* Fixing some scripts for InnoDB Cluster for MySQL 8.0 or greater
+* Removing some unused scripts on InnoDB Cluster
+
+
 ## 1.75.1	13-Feb-2026
 
 ## ADJUSTMENTS

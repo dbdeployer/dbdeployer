@@ -16,7 +16,7 @@
 
 # dbdeployer installer version 1.0.0 - Released 2020-12-29
 # Usage:
-# curl -s https://raw.githubusercontent.com/datacharmer/dbdeployer/master/scripts/dbdeployer-install.sh | bash
+# curl -s https://raw.githubusercontent.com/dbdeployer/dbdeployer/master/scripts/dbdeployer-install.sh | bash
 # or
 # curl -L -s https://bit.ly/dbdeployer | bash
 
@@ -31,7 +31,7 @@ set -u
 set -o pipefail
 
 # File containing latest version of dbdeployer
-version_file=https://raw.githubusercontent.com/datacharmer/dbdeployer/master/common/VERSION
+version_file=https://raw.githubusercontent.com/dbdeployer/dbdeployer/master/common/VERSION
 
 # check_exit_code checks the return code of the previous command
 # exits the script if it is non-zero

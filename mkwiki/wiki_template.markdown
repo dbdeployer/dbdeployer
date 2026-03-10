@@ -25,13 +25,13 @@ For example:
 
 ## Installation via script
 
-![installation](https://raw.githubusercontent.com/datacharmer/dbdeployer/master/docs/dbdeployer-installation.gif)
+![installation](https://raw.githubusercontent.com/dbdeployer/dbdeployer/master/docs/dbdeployer-installation.gif)
 
-You can download the [installation script](https://raw.githubusercontent.com/datacharmer/dbdeployer/master/scripts/dbdeployer-install.sh), and run it in your computer.
+You can download the [installation script](https://raw.githubusercontent.com/dbdeployer/dbdeployer/master/scripts/dbdeployer-install.sh), and run it in your computer.
 The script will find the latest version, download the corresponding binaries, check the SHA256 checksum, and - if given privileges - copy the executable to a directory within `$PATH`.
 
 ```
-$ curl -s https://raw.githubusercontent.com/datacharmer/dbdeployer/master/scripts/dbdeployer-install.sh | bash
+$ curl -s https://raw.githubusercontent.com/dbdeployer/dbdeployer/master/scripts/dbdeployer-install.sh | bash
 ```
 
 A shortcut is available via the bit.ly service:
@@ -43,7 +43,7 @@ $ curl -L -s https://bit.ly/dbdeployer | bash
 Finally, there is a third-party service that installs any Go tool. The command to use it for dbdeployer is
 
 ```
-$ curl -sf https://gobinaries.com/datacharmer/dbdeployer | sh
+$ curl -sf https://gobinaries.com/dbdeployer/dbdeployer | sh
 ```
 
 Please see [gobinaries.com](https://gobinaries.com) for more info.

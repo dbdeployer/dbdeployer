@@ -41,7 +41,7 @@ func getCmdOutput(cmdText string) string {
 	cmd := exec.Command(command, args...)
 	stdout, err := cmd.StdoutPipe()
 	if err = cmd.Start(); err != nil {
-		common.Exitf(1, "# ERROR: %s", err)
+		return fmt.Sprintf("# ERROR running %s: %s", cmdText, err)
 	}
 	slurp, _ := io.ReadAll(stdout)
 	_ = stdout.Close()
