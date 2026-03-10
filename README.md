@@ -2,7 +2,7 @@
 [DBdeployer](https://github.com/dbdeployer/dbdeployer) is a tool that deploys MySQL database servers easily.
 This is a port of [MySQL-Sandbox](https://github.com/datacharmer/mysql-sandbox), originally written in Perl, and re-designed from the ground up in [Go](https://golang.org). See the [features comparison](https://github.com/dbdeployer/dbdeployer/blob/master/docs/features.md) for more detail.
 
-Documentation updated for version 1.66.0 (26-Jul-2022 10:30 UTC)
+Documentation updated for version 1.75.2 (10-Mar-2026 22:03 UTC)
 
 ![Build Status](https://github.com/dbdeployer/dbdeployer/workflows/.github/workflows/all_tests.yml/badge.svg)
 
