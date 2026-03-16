@@ -129,7 +129,7 @@ made up MySQL versions (such as 5.7.99) and make sure that dbdeployer works as e
 If your environment has all the requirements to run everything listed above, a single command will run all the tests:
 
 ```bash
-./tests/all_tests.sh NEW_VERSION
+./test/all_tests.sh NEW_VERSION
 ```
 
 This one will take approximately 90 minutes to complete.

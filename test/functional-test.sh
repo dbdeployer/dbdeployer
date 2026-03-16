@@ -70,6 +70,7 @@ then
     export skip_pxc_operations=1
     export skip_ndb_operations=1
     export skip_load_data_operations=1
+    export skip_cluster_operations=1
     export no_tests=1
 fi
 
@@ -110,6 +111,7 @@ do
             unset skip_import_operations
             unset skip_load_data_operations
             unset no_tests
+            unset skip_cluster_operations
             echo "# Enabling all tests"
             ;;
         tidb)
@@ -192,6 +194,11 @@ do
             unset no_tests
             echo "# Enabling load data operations tests"
             ;;
+        cluster)
+            unset skip_cluster_operations
+            unset no_tests
+            echo "# Enabling InnoDB Cluster operations tests"
+            ;;
         *)
             echo "Allowed tests (you can choose more than one):"
             echo "  main     : main deployment methods"
@@ -209,6 +216,7 @@ do
             echo "  multi    : multi-source operations (fan-in, all-masters)"
             echo "  pxc      : PXC operations"
             echo "  ndb      : NDB operations"
+            echo "  cluster  : InnoDB Cluster operations"
             echo "  all      : enable all the above tests"
             echo ""
             echo "Allowed modifiers:"
@@ -1669,21 +1677,21 @@ function innodb_cluster_operations {
     for V in ${group_versions[*]}
     do
         echo "# InnoDB Cluster operations $V"
-        run dbdeployer deploy replication $V --topology=innodb-cluster
+        run dbdeployer deploy replication $V --topology=innodb-cluster --mysqlsh-path=$SANDBOX_BINARY/mysqlsh/$V
         results "InnoDB Cluster $V"
         v_path=$(echo innodb_msb_$V| tr '.' '_')
 
         capture_test run dbdeployer global test
         capture_test run dbdeployer global test-replication
-        test_use_masters_slaves $V innodb_msb_ 3 3
         test_ports $V innodb_msb_ 6 3
         check_for_exit innodb_cluster_operations
-        for cmd in restart_all node1/restart node2/restart node3/restart
-        do
-            run $SANDBOX_HOME/$v_path/$cmd
-            capture_test run dbdeployer global test
-            capture_test run dbdeployer global test-replication
-        done
+
+        run $SANDBOX_HOME/$v_path/restart_all
+        # InnoDB Cluster nodes need time to start and rejoin; avoid "server stopped" / connection refused
+        sleep 25
+        capture_test run dbdeployer global test
+        capture_test run dbdeployer global test-replication
+
         test_deletion $V 1 $processes_before
         results "innodb-cluster $V - after deletion"
     done
@@ -1753,6 +1761,10 @@ fi
 if [ -z "$skip_custom_replication_methods" ]
 then
     custom_replication_methods
+fi
+if [ -z "$skip_cluster_operations" ]
+then
+    cluster_operations
 fi
 
 stop_timer

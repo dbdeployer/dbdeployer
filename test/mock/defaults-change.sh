@@ -91,6 +91,8 @@ create_mock_version 5.6.66
 create_mock_version 5.7.66
 create_mock_version 8.0.66
 create_mock_version 8.0.67
+create_mock_version 8.4.66
+create_mock_version 9.6.66
 
 # Changing all defaults statically
 run dbdeployer defaults show

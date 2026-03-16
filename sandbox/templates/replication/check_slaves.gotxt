@@ -6,11 +6,27 @@ echo "{{.MasterLabel}}"
 port=$($SBDIR/{{.MasterLabel}}/use -BN -e "show variables like 'port'")
 server_id=$($SBDIR/{{.MasterLabel}}/use -BN -e "show variables like 'server_id'")
 echo "$port - $server_id"
-$SBDIR/{{.MasterLabel}}/use -e 'show master status\G' | grep "File\|Position\|Executed"
+
+version_str=$($SBDIR/{{.MasterLabel}}/use -BN -e "select @@version" | tr -d '\r' | head -n 1)
+major_version=${version_str%%.*}
+minor_version=${version_str#*.}
+minor_version=${minor_version%%.*}
+
+if [ "$major_version" -gt 8 ] || { [ "$major_version" -eq 8 ] && [ "$minor_version" -ge 4 ]; }
+then
+    $SBDIR/{{.MasterLabel}}/use -E -e 'show binary log status' | grep "File\\|Position\\|Executed"
+else
+    $SBDIR/{{.MasterLabel}}/use -E -e 'show master status' | grep "File\\|Position\\|Executed"
+fi
 {{ range .Slaves }}
 echo "{{.SlaveLabel}}{{.Node}}"
 port=$($SBDIR/{{.NodeLabel}}{{.Node}}/use -BN -e "show variables like 'port'")
 server_id=$($SBDIR/{{.NodeLabel}}{{.Node}}/use -BN -e "show variables like 'server_id'")
 echo "$port - $server_id"
-$SBDIR/{{.NodeLabel}}{{.Node}}/use -e 'show slave status\G' | grep "\(Running:\|Master_Log_Pos\|\<Master_Log_File\|Retrieved\|Executed\|Auto_Position\)"
+if [ "$major_version" -gt 8 ] || { [ "$major_version" -eq 8 ] && [ "$minor_version" -ge 4 ]; }
+then
+    $SBDIR/{{.NodeLabel}}{{.Node}}/use -E -e 'show replica status' | grep "\\(Running:\\|Read_Source_Log_Pos\\|Exec_Source_Log_Pos\\|\\<Source_Log_File\\|Retrieved\\|Executed\\|Auto_Position\\)"
+else
+    $SBDIR/{{.NodeLabel}}{{.Node}}/use -E -e 'show slave status' | grep "\\(Running:\\|Master_Log_Pos\\|\\<Master_Log_File\\|Retrieved\\|Executed\\|Auto_Position\\)"
+fi
 {{end}}

@@ -61,7 +61,7 @@ do
     do
         version=${vers}.${rev}
         version_name=$(echo $version | tr '.' '_')
-        run dbdeployer deploy replication $version --topology=innodb-cluster
+        run dbdeployer deploy replication $version --topology=innodb-cluster --mysqlsh-path=$SANDBOX_BINARY/$version
 
         # Check existence 
         test_completeness $version innodb_msb_ multiple

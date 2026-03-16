@@ -42,9 +42,9 @@ start_timer
 mkdir -p $mock_dir/home/.dbdeployer
 touch $mock_dir/home/.dbdeployer/sandboxes.json
 
-versions=(5.0 5.1 5.5 5.6 5.7 8.0)
+versions=(5.1 5.5 5.6 5.7 8.0 8.4 9.6)
 #rev_list="0 21 43 65 87 98"
-rev_list="0 21 99"
+rev_list="0 22 99"
 
 for rev in $rev_list
 do

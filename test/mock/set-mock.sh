@@ -95,6 +95,7 @@ function create_mock_version {
     make_dir $SANDBOX_BINARY/$version_label/lib
     dbdeployer defaults templates show no_op_mock > $SANDBOX_BINARY/$version_label/bin/mysqld
     dbdeployer defaults templates show no_op_mock > $SANDBOX_BINARY/$version_label/bin/mysql
+    dbdeployer defaults templates show no_op_mock > $SANDBOX_BINARY/$version_label/bin/mysqlsh
     dbdeployer defaults templates show mysqld_safe_mock > $SANDBOX_BINARY/$version_label/bin/mysqld_safe
     dbdeployer defaults templates show no_op_mock > $SANDBOX_BINARY/$version_label/scripts/mysql_install_db
     dbdeployer defaults templates show no_op_mock > $SANDBOX_BINARY/$version_label/lib/libmysqlclient.$OS_extension

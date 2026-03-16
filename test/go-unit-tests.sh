@@ -17,8 +17,6 @@ testdir=$(dirname $0)
 cd $testdir
 cd ..
 
-maindir=$PWD
-
 unset DBDEPLOYER_LOGGING
 
 function check_exit_code {
@@ -31,13 +29,11 @@ function check_exit_code {
 
 }
 
-test_dirs=$(find . -name '*_test.go' -exec dirname {} \; | tr -d './' | sort |uniq)
+test_dirs=$(find . -name '*_test.go' -exec dirname {} \; | sed 's|^\./||' | sort -u)
 
 for dir in $test_dirs
 do
-    cd $dir
     echo "# Testing $dir"
-    go test -v -timeout 30m
+    go test -v -timeout 30m ./${dir}/...
     check_exit_code
-    cd $maindir
 done

@@ -45,6 +45,8 @@ create_mock_version 5.7.23
 create_mock_version 8.0.66
 create_mock_version 8.0.67
 create_mock_version 8.0.68
+create_mock_version 8.4.66
+create_mock_version 9.6.66
 
 run dbdeployer deploy single 5.7.23
 run dbdeployer deploy single 5.7.22
@@ -92,6 +94,50 @@ ok_executable_exists $SANDBOX_HOME/multi_msb_8_0_68/use_all_admin
 ok_executable_exists $SANDBOX_HOME/multi_msb_8_0_68/node1/use_admin
 ok_executable_exists $SANDBOX_HOME/multi_msb_8_0_68/node2/use_admin
 ok_executable_exists $SANDBOX_HOME/multi_msb_8_0_68/node3/use_admin
+dbdeployer sandboxes
+
+# Mock versions for higher major releases - all deployment types
+run dbdeployer deploy single 8.4.66 --enable-admin-address
+# Expecting server port, admin port, and MySQLX port
+expected_port=$(dbdeployer sandboxes | grep 'msb_8_4_66 .* .8466 19466 18466 ')
+ok "expected port 8466" "$expected_port"
+ok_executable_exists $SANDBOX_HOME/msb_8_4_66/use_admin
+
+run dbdeployer deploy replication 8.4.66 --enable-admin-address
+run dbdeployer deploy multiple 8.4.66 --enable-admin-address
+expected_port=$(dbdeployer sandboxes | grep 'multi_msb_8_4_66 .* ')
+ok "multiple 8.4.66 listed" "$expected_port"
+expected_port=$(dbdeployer sandboxes | grep 'rsandbox_8_4_66 .* ')
+ok "replication 8.4.66 listed" "$expected_port"
+ok_executable_exists $SANDBOX_HOME/rsandbox_8_4_66/use_all_admin
+ok_executable_exists $SANDBOX_HOME/rsandbox_8_4_66/master/use_admin
+ok_executable_exists $SANDBOX_HOME/rsandbox_8_4_66/node1/use_admin
+ok_executable_exists $SANDBOX_HOME/rsandbox_8_4_66/node2/use_admin
+ok_executable_exists $SANDBOX_HOME/multi_msb_8_4_66/use_all_admin
+ok_executable_exists $SANDBOX_HOME/multi_msb_8_4_66/node1/use_admin
+ok_executable_exists $SANDBOX_HOME/multi_msb_8_4_66/node2/use_admin
+ok_executable_exists $SANDBOX_HOME/multi_msb_8_4_66/node3/use_admin
+
+run dbdeployer deploy single 9.6.66 --enable-admin-address
+# Expecting server port, admin port, and MySQLX port
+expected_port=$(dbdeployer sandboxes | grep 'msb_9_6_66 .* .9666 20666 19666 ')
+ok "expected port 9666" "$expected_port"
+ok_executable_exists $SANDBOX_HOME/msb_9_6_66/use_admin
+
+run dbdeployer deploy replication 9.6.66 --enable-admin-address
+run dbdeployer deploy multiple 9.6.66 --enable-admin-address
+expected_port=$(dbdeployer sandboxes | grep 'multi_msb_9_6_66 .* ')
+ok "multiple 9.6.66 listed" "$expected_port"
+expected_port=$(dbdeployer sandboxes | grep 'rsandbox_9_6_66 .* ')
+ok "replication 9.6.66 listed" "$expected_port"
+ok_executable_exists $SANDBOX_HOME/rsandbox_9_6_66/use_all_admin
+ok_executable_exists $SANDBOX_HOME/rsandbox_9_6_66/master/use_admin
+ok_executable_exists $SANDBOX_HOME/rsandbox_9_6_66/node1/use_admin
+ok_executable_exists $SANDBOX_HOME/rsandbox_9_6_66/node2/use_admin
+ok_executable_exists $SANDBOX_HOME/multi_msb_9_6_66/use_all_admin
+ok_executable_exists $SANDBOX_HOME/multi_msb_9_6_66/node1/use_admin
+ok_executable_exists $SANDBOX_HOME/multi_msb_9_6_66/node2/use_admin
+ok_executable_exists $SANDBOX_HOME/multi_msb_9_6_66/node3/use_admin
 dbdeployer sandboxes
 
 run dbdeployer delete ALL --skip-confirm

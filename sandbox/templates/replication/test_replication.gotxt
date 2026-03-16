@@ -27,13 +27,11 @@ done
 sleep 0.5
 MASTER_RECS=$($MASTER -BN -e 'select count(*) from test.t1')
 
-master_status=master_status$$
-slave_status=slave_status$$
-$MASTER -e 'show master status\G' > $master_status
-master_binlog=$(grep 'File:' $master_status | awk '{print $2}' )
-master_pos=$(grep 'Position:' $master_status | awk '{print $2}' )
+# Use tabular output (no \G) so this works with both mysql and mysqlsh
+master_status_line=$($MASTER -BN -e 'show master status')
+master_binlog=$(echo "$master_status_line" | awk '{print $1}')
+master_pos=$(echo "$master_status_line" | awk '{print $2}')
 echo "# {{.MasterLabel}} log: $master_binlog - Position: $master_pos - Rows: $MASTER_RECS"
-rm -f $master_status
 
 FAILED=0
 PASSED=0
@@ -94,7 +92,10 @@ do
     if [ -n "$SLAVE" ]
     then
         echo "# Testing {{.SlaveLabel}} #$SLAVE_N"
-        if [ -f initialize_nodes ]
+        # Skip master_pos_wait for topologies that don't use traditional async replication:
+        # - initialize_nodes (replication with delayed slave setup)
+        # - initialize_nodes_cluster (InnoDB Cluster / Group Replication)
+        if [ -f initialize_nodes ] || [ -f initialize_nodes_cluster ]
         then
             sleep 3
         else
@@ -109,12 +110,24 @@ do
         fi
 if [ -f initialize_{{.SlaveLabel}}s ]
 then
-	$SLAVE -e 'show slave status\G' > $slave_status
-	IO_RUNNING=$(grep -w Slave_IO_Running $slave_status | awk '{print $2}')
+	# MySQL 8.0+ has performance_schema.replication_* with SERVICE_STATE; 5.5/5.6/5.7 use SHOW SLAVE STATUS
+	version_str=$($SLAVE -BN -e "select @@version" | tr -d '\r' | head -n 1)
+	major_version=${version_str%%.*}
+	minor_version=${version_str#*.}
+	minor_version=${minor_version%%.*}
+	if [ "$major_version" -ge 8 ]
+	then
+		IO_RUNNING=$($SLAVE -BN -e "SELECT COALESCE((SELECT SERVICE_STATE FROM performance_schema.replication_connection_status LIMIT 1), 'OFF')")
+		SQL_RUNNING=$($SLAVE -BN -e "SELECT COALESCE((SELECT SERVICE_STATE FROM performance_schema.replication_applier_status LIMIT 1), 'OFF')")
+		[ "$IO_RUNNING" = "ON" ] && IO_RUNNING=Yes || IO_RUNNING=No
+		[ "$SQL_RUNNING" = "ON" ] && SQL_RUNNING=Yes || SQL_RUNNING=No
+	else
+		slave_status=$($SLAVE -E -e 'SHOW SLAVE STATUS')
+		IO_RUNNING=$(echo "$slave_status" | grep "Slave_IO_Running:" | sed 's/.*: //' | tr -d ' ')
+		SQL_RUNNING=$(echo "$slave_status" | grep "Slave_SQL_Running:" | sed 's/.*: //' | tr -d ' ')
+	fi
 	ok_equal $IO_RUNNING Yes "{{.SlaveLabel}} #$SLAVE_N IO thread is running"
-	SQL_RUNNING=$(grep -w Slave_IO_Running $slave_status | awk '{print $2}')
 	ok_equal $SQL_RUNNING Yes "{{.SlaveLabel}} #$SLAVE_N SQL thread is running"
-	rm -f $slave_status
 fi
         [ $FAILED == 0 ] || exit 1
 

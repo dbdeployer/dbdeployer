@@ -664,6 +664,11 @@ func createSingleSandbox(sandboxDef SandboxDef) (execList []concurrent.Execution
 		return emptyExecutionList, errors.Wrapf(err, "")
 	}
 	shortVersion := fmt.Sprintf("%d.%d", verList[0], verList[1])
+	versionAtLeast84, err := common.GreaterOrEqualVersion(sandboxDef.Version, []int{8, 4, 0})
+	if err != nil {
+		return emptyExecutionList, errors.Wrapf(err, "")
+	}
+
 	if sandboxDef.ClientBasedir == "" {
 		sandboxDef.ClientBasedir = sandboxDef.Basedir
 	}
@@ -960,9 +965,9 @@ func createSingleSandbox(sandboxDef SandboxDef) (execList []concurrent.Execution
 		},
 	}
 
-	tmplConnection := globals.TmplConnectionInfoSql84
-	if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-		tmplConnection = globals.TmplConnectionInfoSql
+	tmplConnection := globals.TmplConnectionInfoSql
+	if versionAtLeast84 {
+		tmplConnection = globals.TmplConnectionInfoSql84
 	}
 	sb.scripts = append(sb.scripts, ScriptDef{globals.ScriptConnectionSql, tmplConnection, false})
 

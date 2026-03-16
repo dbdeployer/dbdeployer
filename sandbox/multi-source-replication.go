@@ -323,11 +323,14 @@ func CreateFanInReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 		return err
 	}
 	rev := vList[0]
-	shortVersion := fmt.Sprintf("%d.%d", vList[0], vList[1])
+	versionAtLeast84, err := common.GreaterOrEqualVersion(sandboxDef.Version, []int{8, 4, 0})
+	if err != nil {
+		return err
+	}
 	sandboxDef.GtidOptions = SingleTemplates[globals.TmplGtidOptions57].Contents
-	sandboxDef.ReplCrashSafeOptions = SingleTemplates[globals.TmplReplCrashSafeOptions84].Contents
-	if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-		sandboxDef.ReplCrashSafeOptions = SingleTemplates[globals.TmplReplCrashSafeOptions].Contents
+	sandboxDef.ReplCrashSafeOptions = SingleTemplates[globals.TmplReplCrashSafeOptions].Contents
+	if versionAtLeast84 {
+		sandboxDef.ReplCrashSafeOptions = SingleTemplates[globals.TmplReplCrashSafeOptions84].Contents
 	}
 	if sandboxDef.DirName == "" {
 		sandboxDef.DirName = defaults.Defaults().FanInPrefix + common.VersionToName(origin)

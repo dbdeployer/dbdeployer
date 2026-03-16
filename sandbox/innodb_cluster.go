@@ -20,14 +20,12 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/dbdeployer/dbdeployer/common"
 	"github.com/dbdeployer/dbdeployer/concurrent"
 	"github.com/dbdeployer/dbdeployer/defaults"
 	"github.com/dbdeployer/dbdeployer/globals"
-	"github.com/dustin/go-humanize/english"
 	"github.com/pkg/errors"
 )
 
@@ -62,11 +60,10 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 		return err
 	}
 	rev := vList[2]
-	shortVersion := fmt.Sprintf("%d.%d", vList[0], vList[1])
-	if strings.HasPrefix(shortVersion, "5") {
-		return fmt.Errorf("InnoDB Cluster is not supported for MySQL 5.7 or below")
+	versionAtLeast84, err := common.GreaterOrEqualVersion(sandboxDef.Version, []int{8, 4, 0})
+	if err != nil {
+		return err
 	}
-
 	basePort := computeBaseport(sandboxDef.Port + defaults.Defaults().GroupReplicationBasePort + (rev * 100))
 	if sandboxDef.SinglePrimary {
 		basePort = sandboxDef.Port + defaults.Defaults().GroupReplicationSpBasePort + (rev * 100)
@@ -74,7 +71,7 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 	if sandboxDef.BasePort > 0 {
 		basePort = sandboxDef.BasePort
 	}
-
+	sandboxDef.PortAsServerId = true
 	// baseServerId := sandboxDef.BaseServerId
 	if nodes < 3 {
 		return fmt.Errorf("can't run group replication with less than 3 nodes")
@@ -269,9 +266,9 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 			"LocalAddresses": fmt.Sprintf("%s:%d", masterIp, groupPort),
 		}
 
-		tmplOptions := globals.TmplClusterOptions84
-		if strings.HasPrefix(shortVersion, "8.0") {
-			tmplOptions = globals.TmplClusterOptions
+		tmplOptions := globals.TmplClusterOptions
+		if versionAtLeast84 {
+			tmplOptions = globals.TmplClusterOptions84
 		}
 
 		replOptionsText, err := common.SafeTemplateFill("group_replication",
@@ -287,9 +284,9 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 
 		sandboxDef.ReplOptions += fmt.Sprintf("\n%s\n", SingleTemplates[globals.TmplGtidOptions57].Contents)
 
-		tmplKey := globals.TmplReplCrashSafeOptions84
-		if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-			tmplKey = globals.TmplReplCrashSafeOptions
+		tmplKey := globals.TmplReplCrashSafeOptions
+		if versionAtLeast84 {
+			tmplKey = globals.TmplReplCrashSafeOptions84
 		}
 		sandboxDef.ReplOptions += fmt.Sprintf("\n%s\n", SingleTemplates[tmplKey].Contents)
 		// 8.0.11
@@ -361,13 +358,6 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 		return errors.Wrapf(err, "unable to update catalog")
 	}
 
-	slavePlural := english.PluralWord(2, slaveLabel, "")
-	masterPlural := english.PluralWord(2, masterLabel, "")
-	useAllMasters := "use_all_" + masterPlural
-	useAllSlaves := "use_all_" + slavePlural
-	execAllSlaves := "exec_all_" + slavePlural
-	execAllMasters := "exec_all_" + masterPlural
-
 	logger.Printf("Writing group replication scripts\n")
 	sbMultiple := ScriptBatch{
 		tc:         MultipleTemplates,
@@ -376,7 +366,6 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 		sandboxDir: sandboxDef.SandboxDir,
 		scripts: []ScriptDef{
 			{globals.ScriptStartAll, globals.TmplStartMulti, true},
-			{globals.ScriptRestartAll, globals.TmplRestartMulti, true},
 			{globals.ScriptStatusAll, globals.TmplStatusMulti, true},
 			{globals.ScriptTestSbAll, globals.TmplTestSbMulti, true},
 			{globals.ScriptStopAll, globals.TmplStopMulti, true},
@@ -390,22 +379,19 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 			{globals.ScriptExecAll, globals.TmplExecMulti, true},
 		},
 	}
+
 	sbRepl := ScriptBatch{
 		tc:         ReplicationTemplates,
 		logger:     logger,
 		data:       data,
 		sandboxDir: sandboxDef.SandboxDir,
 		scripts: []ScriptDef{
-			{useAllSlaves, globals.TmplMultiSourceUseSlaves, true},
-			{useAllMasters, globals.TmplMultiSourceUseMasters, true},
-			{execAllMasters, globals.TmplMultiSourceExecMasters, true},
-			{execAllSlaves, globals.TmplMultiSourceExecSlaves, true},
-			{globals.ScriptTestReplication, globals.TmplMultiSourceTest, true},
-			{globals.ScriptWipeRestartAll, globals.TmplWipeAndRestartAll, true},
+			{globals.ScriptTestReplication, globals.TmplTestReplication, true},
+			{globals.ScriptRestartAll, globals.TmplRestartAll, true},
 		},
 	}
 
-	sbGroup := ScriptBatch{
+	sbInnoDB := ScriptBatch{
 		tc:         ClusterTemplates,
 		logger:     logger,
 		data:       data,
@@ -413,10 +399,12 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 		scripts: []ScriptDef{
 			{globals.ScriptInitializeNodesCluster, globals.TmplInitializeNodesCluster, true},
 			{globals.ScriptCheckNodesCluster, globals.TmplCheckClusterNodes, true},
+			{globals.ScriptWipeRestartAll, globals.TmplWipeAndRestartAllCluster, true},
+			{globals.ScriptStartAll, globals.TmplStartAllCluster, true},
 		},
 	}
 
-	for _, sb := range []ScriptBatch{sbMultiple, sbRepl, sbGroup} {
+	for _, sb := range []ScriptBatch{sbMultiple, sbInnoDB, sbRepl} {
 		err := writeScripts(sb)
 		if err != nil {
 			return err

@@ -21,7 +21,6 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/dbdeployer/dbdeployer/common"
@@ -127,7 +126,10 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 		return err
 	}
 	rev := vList[2]
-	shortVersion := fmt.Sprintf("%d.%d", vList[0], vList[1])
+	versionAtLeast84, err := common.GreaterOrEqualVersion(sandboxDef.Version, []int{8, 4, 0})
+	if err != nil {
+		return err
+	}
 	basePort := computeBaseport(sandboxDef.Port + defaults.Defaults().GroupReplicationBasePort + (rev * 100))
 	if sandboxDef.SinglePrimary {
 		basePort = sandboxDef.Port + defaults.Defaults().GroupReplicationSpBasePort + (rev * 100)
@@ -333,9 +335,9 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 			"PrimaryMode":    singlePrimaryMode,
 		}
 
-		tmplGroup := globals.TmplGroupReplOptions84
-		if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-			tmplGroup = globals.TmplGroupReplOptions
+		tmplGroup := globals.TmplGroupReplOptions
+		if versionAtLeast84 {
+			tmplGroup = globals.TmplGroupReplOptions84
 		}
 		replOptionsText, err := common.SafeTemplateFill("group_replication",
 			GroupTemplates[tmplGroup].Contents, replicationData)
@@ -349,9 +351,9 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 
 		sandboxDef.ReplOptions += fmt.Sprintf("\n%s\n", SingleTemplates[globals.TmplGtidOptions57].Contents)
 
-		tmplKey := globals.TmplReplCrashSafeOptions84
-		if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-			tmplKey = globals.TmplReplCrashSafeOptions
+		tmplKey := globals.TmplReplCrashSafeOptions
+		if versionAtLeast84 {
+			tmplKey = globals.TmplReplCrashSafeOptions84
 		}
 		sandboxDef.ReplOptions += fmt.Sprintf("\n%s\n", SingleTemplates[tmplKey].Contents)
 		// 8.0.11
@@ -467,9 +469,9 @@ func CreateGroupReplication(sandboxDef SandboxDef, origin string, nodes int, mas
 		},
 	}
 
-	tmplInitNodes := globals.TmplInitNodes84
-	if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-		tmplInitNodes = globals.TmplInitNodes
+	tmplInitNodes := globals.TmplInitNodes
+	if versionAtLeast84 {
+		tmplInitNodes = globals.TmplInitNodes84
 	}
 
 	sbGroup := ScriptBatch{

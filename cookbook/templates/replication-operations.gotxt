@@ -20,9 +20,19 @@ sandbox_dir=$SANDBOX_HOME/rsandbox_$(echo $version | tr '.' '_' )
 header "Running a simple command with the master in the sandbox." \
    "Notice the usage of the '-e', as if we were using the 'mysql' client" 
 
-(set -x
-$sandbox_dir/m -e 'SHOW MASTER STATUS'
-)
+major_version=$(echo "$version" | cut -d. -f1)
+minor_version=$(echo "$version" | cut -d. -f2)
+
+if [ "$major_version" -gt 8 ] || { [ "$major_version" -eq 8 ] && [ "$minor_version" -ge 4 ]; }
+then
+    (set -x
+    $sandbox_dir/m -e 'SHOW BINARY LOG STATUS'
+    )
+else
+    (set -x
+    $sandbox_dir/m -e 'SHOW MASTER STATUS'
+    )
+fi
 
 header "Creating a table in the master"
 (set -x
@@ -54,7 +64,14 @@ header "Checking the status of all slaves"
 run $sandbox_dir/check_slaves
 
 header "Running a multiple query in all slaves"
-(set -x
-$sandbox_dir/use_all_slaves "STOP SLAVE; SET GLOBAL slave_parallel_workers=3; START SLAVE;show processlist "
-)
+if [ "$major_version" -gt 8 ] || { [ "$major_version" -eq 8 ] && [ "$minor_version" -ge 4 ]; }
+then
+    (set -x
+    $sandbox_dir/use_all_slaves "STOP REPLICA; SET GLOBAL replica_parallel_workers=3; START REPLICA;show processlist "
+    )
+else
+    (set -x
+    $sandbox_dir/use_all_slaves "STOP SLAVE; SET GLOBAL slave_parallel_workers=3; START SLAVE;show processlist "
+    )
+fi
 

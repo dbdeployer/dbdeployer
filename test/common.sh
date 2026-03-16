@@ -78,7 +78,19 @@ function check_for_log_errors {
     skip_error_evaluation=$2
     for log_file in $(find $SANDBOX_HOME -name msandbox.err)
     do
-        has_errors=$(grep -w ERROR $log_file| wc -l | tr -d ' \t' )
+        # Ignore transient Group Replication / InnoDB Cluster errors expected during join, reboot, or mysqlsh.test channel
+        has_errors=$(grep -w ERROR "$log_file" \
+            | grep -v "Plugin group_replication reported: 'Failed to establish MySQL client connection in Group Replication" \
+            | grep -v "\[GCS\] Error on opening a connection to peer node" \
+            | grep -v "\[GCS\] Error connecting to all peers\. Member join failed" \
+            | grep -v "\[GCS\] The member was unable to join the group" \
+            | grep -v "Timeout on wait for view after joining group" \
+            | grep -v "\[GCS\] The member is leaving a group without being on one" \
+            | grep -v "Plugin group_replication reported: 'Unable to start Group Replication on boot" \
+            | grep -v "Replica I/O for channel 'mysqlsh.test': Fatal error: The replica I/O thread stops because source and replica have equal MySQL server ids" \
+            | grep -v "Replica I/O for channel 'mysqlsh.test': Source command COM_REGISTER_REPLICA failed: Access denied for user 'mysqlsh.test'" \
+            | grep -v "Replica I/O thread couldn't register on source" \
+            | wc -l | tr -d ' \t')
         if [ "$has_errors" != "0" ]
         then
             echo $dash_line

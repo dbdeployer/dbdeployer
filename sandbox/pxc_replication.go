@@ -18,7 +18,6 @@ package sandbox
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize/english"
@@ -63,8 +62,10 @@ func CreatePxcReplication(sandboxDef SandboxDef, origin string, nodes int, maste
 		return err
 	}
 	rev := vList[2]
-	shortVersion := fmt.Sprintf("%d.%d", vList[0], vList[1])
-
+	versionAtLeast84, err := common.GreaterOrEqualVersion(sandboxDef.Version, []int{8, 4, 0})
+	if err != nil {
+		return err
+	}
 	basePort := computeBaseport(sandboxDef.Port + defaults.Defaults().PxcBasePort + (rev * 100))
 	if sandboxDef.BasePort > 0 {
 		basePort = sandboxDef.BasePort
@@ -326,9 +327,9 @@ func CreatePxcReplication(sandboxDef SandboxDef, origin string, nodes int, maste
 		sandboxDef.ReplOptions = baseReplicationOptions + fmt.Sprintf("\n%s\n", pxcFilledTemplate)
 
 		sandboxDef.ReplOptions += fmt.Sprintf("\n%s\n", SingleTemplates[globals.TmplGtidOptions57].Contents)
-		tmplKey := globals.TmplReplCrashSafeOptions84
-		if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-			tmplKey = globals.TmplReplCrashSafeOptions
+		tmplKey := globals.TmplReplCrashSafeOptions
+		if versionAtLeast84 {
+			tmplKey = globals.TmplReplCrashSafeOptions84
 		}
 		sandboxDef.ReplOptions += fmt.Sprintf("\n%s\n", SingleTemplates[tmplKey].Contents)
 		// 8.0.11

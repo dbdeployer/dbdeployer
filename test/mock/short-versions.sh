@@ -38,7 +38,7 @@ source set-mock.sh
 export SHOW_CHANGED_PORTS=1
 start_timer
 
-versions=(5.0 5.1 5.5 5.6 5.7 8.0)
+versions=(5.0 5.1 5.5 5.6 5.7 8.0  8.4 9.6)
 latest_rev=59
 rev_list="26 37 48 $latest_rev"
 

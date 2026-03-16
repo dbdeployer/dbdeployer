@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/dbdeployer/dbdeployer/common"
@@ -127,7 +126,10 @@ func CreateMasterSlaveReplication(sandboxDef SandboxDef, origin string, nodes in
 		return err
 	}
 	rev := vList[2]
-	shortVersion := fmt.Sprintf("%d.%d", vList[0], vList[1])
+	versionAtLeast84, err := common.GreaterOrEqualVersion(sandboxDef.Version, []int{8, 4, 0})
+	if err != nil {
+		return err
+	}
 	basePort := computeBaseport(sandboxDef.Port + defaults.Defaults().MasterSlaveBasePort + (rev * 100))
 	if sandboxDef.BasePort > 0 {
 		basePort = sandboxDef.BasePort
@@ -180,9 +182,9 @@ func CreateMasterSlaveReplication(sandboxDef SandboxDef, origin string, nodes in
 	changeMasterExtra := ""
 	masterAutoPosition := ""
 	if sandboxDef.GtidOptions != "" {
-		var autoPosOpt string = "SOURCE_AUTO_POSITION=1"
-		if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-			autoPosOpt = "MASTER_AUTO_POSITION=1"
+		var autoPosOpt string = "MASTER_AUTO_POSITION=1"
+		if versionAtLeast84 {
+			autoPosOpt = "SOURCE_AUTO_POSITION=1"
 		}
 		masterAutoPosition += ", " + autoPosOpt
 		logger.Printf("Adding %s to slaves setup\n", autoPosOpt)
@@ -195,9 +197,9 @@ func CreateMasterSlaveReplication(sandboxDef SandboxDef, origin string, nodes in
 	}
 	if isMinimumNativeAuthPlugin {
 		if !sandboxDef.NativeAuthPlugin {
-			var publicKeyOpt string = "GET_SOURCE_PUBLIC_KEY=1"
-			if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-				publicKeyOpt = "GET_MASTER_PUBLIC_KEY=1"
+			var publicKeyOpt string = "GET_MASTER_PUBLIC_KEY=1"
+			if versionAtLeast84 {
+				publicKeyOpt = "GET_SOURCE_PUBLIC_KEY=1"
 			}
 			sandboxDef.ChangeMasterOptions = append(sandboxDef.ChangeMasterOptions, publicKeyOpt)
 		}
@@ -452,9 +454,9 @@ func CreateMasterSlaveReplication(sandboxDef SandboxDef, origin string, nodes in
 			{globals.ScriptSysbenchReady, globals.TmplReplSysbenchReady, true},
 		},
 	}
-	tmpl := globals.TmplInitSlaves84
-	if strings.HasPrefix(shortVersion, "5") || strings.HasPrefix(shortVersion, "8.0") {
-		tmpl = globals.TmplInitSlaves
+	tmpl := globals.TmplInitSlaves
+	if versionAtLeast84 {
+		tmpl = globals.TmplInitSlaves84
 	}
 	sb.scripts = append(sb.scripts, ScriptDef{initializeSlaves, tmpl, true})
 	if sandboxDef.SemiSyncOptions != "" {

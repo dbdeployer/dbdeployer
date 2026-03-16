@@ -6,13 +6,24 @@ SBDIR={{.SandboxDir}}
 MASTERS="{{.MasterList}}"
 SLAVES="{{.SlaveList}}"
 
+first_master=$(echo "$MASTERS" | awk '{print $1}')
+version_str=$($SBDIR/{{.NodeLabel}}$first_master/use -BN -e "select @@version" | tr -d '\r' | head -n 1)
+major_version=${version_str%%.*}
+minor_version=${version_str#*.}
+minor_version=${minor_version%%.*}
+
 for M in $MASTERS
 do
 	echo "# Master $M"
 	port=$($SBDIR/{{.NodeLabel}}$M/use -BN -e "show variables like 'port'")
 	server_id=$($SBDIR/{{.NodeLabel}}$M/use -BN -e "show variables like 'server_id'")
 	echo "$port - $server_id"
-	$SBDIR/{{.NodeLabel}}$M/use -e 'show master status\G' | grep "File\|Position\|Executed"
+	if [ "$major_version" -gt 8 ] || { [ "$major_version" -eq 8 ] && [ "$minor_version" -ge 4 ]; }
+	then
+		$SBDIR/{{.NodeLabel}}$M/use -E -e 'show binary log status' | grep "File\\|Position\\|Executed"
+	else
+		$SBDIR/{{.NodeLabel}}$M/use -E -e 'show master status' | grep "File\\|Position\\|Executed"
+	fi
 done
 for S in $SLAVES
 do
@@ -20,5 +31,10 @@ do
 	port=$($SBDIR/{{.NodeLabel}}$S/use -BN -e "show variables like 'port'")
 	server_id=$($SBDIR/{{.NodeLabel}}$S/use -BN -e "show variables like 'server_id'")
 	echo "$port - $server_id"
-	$SBDIR/{{.NodeLabel}}$S/use -e 'show slave status\G' | grep "\(Running:\|Master_Log_Pos\|\<Master_Log_File\|Retrieved\|Channel\|Executed\)"
+	if [ "$major_version" -gt 8 ] || { [ "$major_version" -eq 8 ] && [ "$minor_version" -ge 4 ]; }
+	then
+		$SBDIR/{{.NodeLabel}}$S/use -E -e 'show replica status' | grep "\\(Running:\\|Read_Source_Log_Pos\\|Exec_Source_Log_Pos\\|\\<Source_Log_File\\|Retrieved\\|Channel\\|Executed\\)"
+	else
+		$SBDIR/{{.NodeLabel}}$S/use -E -e 'show slave status' | grep "\\(Running:\\|Master_Log_Pos\\|\\<Master_Log_File\\|Retrieved\\|Channel\\|Executed\\)"
+	fi
 done
