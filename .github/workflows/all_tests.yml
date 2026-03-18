@@ -25,5 +25,57 @@ jobs:
             sudo apt-get install -y --no-install-recommends bash-completion libnuma1 libncurses6
             sudo apt-get install -y --no-install-recommends libaio1t64 || sudo apt-get install -y --no-install-recommends libaio1
 
+        - name: Compat symlinks for MySQL 5.7 SONAMEs
+          run: |
+            # MySQL 5.7.x binaries are linked against legacy SONAMEs:
+            # - libncurses.so.5 / libtinfo.so.5
+            # - libaio.so.1
+            #
+            # On newer Ubuntu releases we may only have the corresponding
+            # newer SONAMEs (e.g. .so.6 / .so.1t64). Create symlinks so the
+            # runtime dependency checks can succeed.
+            sudo bash -lc '
+              set -euo pipefail
+              ldconfig -p >/dev/null 2>&1 || true
+
+              symlink_if_missing() {
+                req="$1"
+                prov="$2"
+                req_path="$(ldconfig -p | awk -v pat="$req" '\''$0 ~ pat {print $NF; exit}'\'' || true)"
+                prov_path="$(ldconfig -p | awk -v pat="$prov" '\''$0 ~ pat {print $NF; exit}'\'' || true)"
+                if [ -z "${req_path}" ] && [ -n "${prov_path}" ]; then
+                  dir="$(dirname "$prov_path")"
+                  ln -sf "${prov_path}" "${dir}/${req}"
+                fi
+              }
+
+              symlink_if_missing "libncurses.so.5" "libncurses.so.6"
+              symlink_if_missing "libtinfo.so.5" "libtinfo.so.6"
+
+              # `libaio1t64` sometimes does not show up in `ldconfig -p` the way
+              # we expect yet, so locate the library file explicitly and
+              # create the `libaio.so.1` symlink.
+              if ! ldconfig -p 2>/dev/null | awk '\''$0 ~ /libaio\\.so\\.1/ {found=1} END {exit !found}'\''; then
+                prov=""
+                for p in \
+                  /lib/x86_64-linux-gnu/libaio.so.1t64 \
+                  /usr/lib/x86_64-linux-gnu/libaio.so.1t64 \
+                  /lib64/libaio.so.1t64 \
+                  /usr/lib64/libaio.so.1t64
+                do
+                  if [ -e "$p" ]; then
+                    prov="$p"
+                    break
+                  fi
+                done
+                if [ -n "$prov" ]; then
+                  dir="$(dirname "$prov")"
+                  ln -sf "$prov" "$dir/libaio.so.1"
+                fi
+              fi
+
+              ldconfig
+            '
+
         - name: tests
           run: ./scripts/ci.sh

@@ -4,7 +4,7 @@ This is a port of [MySQL-Sandbox](https://github.com/datacharmer/mysql-sandbox),
 
 Documentation updated for version 1.75.2 (10-Mar-2026 22:03 UTC)
 
-![Build Status](https://github.com/dbdeployer/dbdeployer/workflows/.github/workflows/all_tests.yml/badge.svg)
+[![All Tests](https://github.com/dbdeployer/dbdeployer/actions/workflows/all_tests.yml/badge.svg?branch=master)](https://github.com/dbdeployer/dbdeployer/actions/workflows/all_tests.yml)
 
 - [Installation](https://github.com/dbdeployer/dbdeployer/wiki/installation)
     - [Manual installation](https://github.com/dbdeployer/dbdeployer/wiki/installation#manual-installation)
