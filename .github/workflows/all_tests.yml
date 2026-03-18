@@ -22,7 +22,8 @@ jobs:
         - name: Install libraries
           run: |
             sudo apt-get update
-            sudo apt-get install -y libncurses5 libaio1 libnuma1 bash-completion
+            sudo apt-get install -y --no-install-recommends bash-completion libnuma1 libncurses6
+            sudo apt-get install -y --no-install-recommends libaio1t64 || sudo apt-get install -y --no-install-recommends libaio1
 
         - name: tests
           run: ./scripts/ci.sh
