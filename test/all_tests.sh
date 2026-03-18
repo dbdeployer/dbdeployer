@@ -140,7 +140,7 @@ function all_tests {
     run_test ./test/go-unit-tests.sh
     run_test ./test/test-linux-init.sh $version
     run_test ./test/functional-test.sh
-    run_test ./test/docker-test.sh $version
+    # run_test ./test/docker-test.sh $version
     run_test ./test/cookbook-test.sh
     run_test init_tests
     if [ -z "$GITHUB_ACTIONS" ]

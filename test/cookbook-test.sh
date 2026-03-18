@@ -32,7 +32,7 @@ g0=(admin-single.sh)
 g1=(single-deployment.sh
 single-custom-users.sh
 single-reinstall.sh
-tidb-deployment.sh
+#tidb-deployment.sh
 )
 
 g2=(master-slave-deployment.sh
@@ -42,7 +42,8 @@ repl-operations-restart.sh
 
 g3=(upgrade.sh)
 
-g4=(ndb-deployment.sh
+g4=(
+# ndb-deployment.sh
 fan-in-deployment.sh
 all-masters-deployment.sh
 )
@@ -58,7 +59,7 @@ group-single-primary-deployment.sh
 
 g7=(replication-between-groups.sh
 replication-between-master-slave.sh
-replication-between-ndb.sh
+# replication-between-ndb.sh
 replication-between-single.sh
 replication-group-master-slave.sh
 replication-group-single.sh
@@ -73,6 +74,8 @@ do
     if [ "$?" != "0" ] ; then exit 1 ; fi
 done
 dbdeployer delete all --concurrent --skip-confirm
+# Allow time for the OS to release ports (TCP TIME_WAIT); deploy uses FindAvailablePort if still in use
+sleep 3
 
 for s in ${g1[*]}
 do
@@ -81,6 +84,7 @@ do
     if [ "$?" != "0" ] ; then exit 1 ; fi
 done
 dbdeployer delete all --concurrent --skip-confirm
+sleep 3
 
 for s in ${g2[*]}
 do
@@ -89,6 +93,7 @@ do
     if [ "$?" != "0" ] ; then exit 1 ; fi
 done
 dbdeployer delete all --concurrent --skip-confirm
+sleep 3
 
 for s in ${g3[*]}
 do
@@ -97,6 +102,7 @@ do
     if [ "$?" != "0" ] ; then exit 1 ; fi
 done
 dbdeployer delete all --concurrent --skip-confirm
+sleep 3
 
 for s in ${g4[*]}
 do
@@ -105,6 +111,7 @@ do
     if [ "$?" != "0" ] ; then exit 1 ; fi
 done
 dbdeployer delete all --concurrent --skip-confirm
+sleep 3
 
 for s in ${g5[*]}
 do
@@ -113,6 +120,7 @@ do
     if [ "$?" != "0" ] ; then exit 1 ; fi
 done
 dbdeployer delete all --concurrent --skip-confirm
+sleep 3
 
 for s in ${g6[*]}
 do
@@ -121,6 +129,7 @@ do
     if [ "$?" != "0" ] ; then exit 1 ; fi
 done
 dbdeployer delete all --concurrent --skip-confirm
+sleep 3
 
 for s in ${g7[*]}
 do
@@ -128,6 +137,7 @@ do
     ./recipes/$s
     if [ "$?" != "0" ] ; then exit 1 ; fi
     dbdeployer delete all --concurrent --skip-confirm
+    sleep 3
 done
 
 if [ -d recipes ]

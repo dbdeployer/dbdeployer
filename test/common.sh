@@ -54,6 +54,48 @@ function exists_in_path {
     done
 }
 
+# get_free_port picks a free port suitable for `dbdeployer deploy single`,
+# which also needs port+10000 (MySQLX) and port+11000 (Admin) to be <= 65535.
+function get_free_port {
+    python3 - <<'PY'
+import random
+import socket
+
+HOST = "127.0.0.1"
+MAX_PORT = 65535
+MYSQLX_DELTA = 10000
+ADMIN_DELTA = 11000
+
+# Keep plenty of room for mysqlx/admin ports.
+LOW = 1100
+HIGH = MAX_PORT - ADMIN_DELTA  # inclusive
+
+def free(p: int) -> bool:
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind((HOST, p))
+        s.close()
+        return True
+    except OSError:
+        return False
+
+for _ in range(5000):
+    p = random.randint(LOW, HIGH)
+    if not free(p):
+        continue
+    # Also ensure the derived ports are free now (best-effort; not a reservation).
+    if not free(p + MYSQLX_DELTA):
+        continue
+    if not free(p + ADMIN_DELTA):
+        continue
+    print(p)
+    raise SystemExit(0)
+
+raise SystemExit("could not find a free port with room for mysqlx/admin")
+PY
+}
+
 function test_header {
     func_name=$1
     arg="$2"

@@ -17,6 +17,7 @@ package concurrent
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
@@ -65,9 +66,10 @@ func startTask(num int, w *sync.WaitGroup, tasks CommonChan) {
 		err error
 	)
 	for cmd := range tasks { // this will exit the loop when the channel closes
-		out, err = cmd.Output()
+		out, err = cmd.CombinedOutput()
 		if err != nil {
-			fmt.Printf("Error executing goroutine %d : %s", num, err)
+			fmt.Fprintf(os.Stderr, "Error executing goroutine %d: %s\n  command: %s %v\n  output:\n%s\n",
+				num, err, cmd.Path, cmd.Args[1:], string(out))
 			//os.Exit(1)
 		}
 		if DebugConcurrency {

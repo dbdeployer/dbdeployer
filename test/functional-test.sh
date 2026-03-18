@@ -70,7 +70,7 @@ then
     export skip_pxc_operations=1
     export skip_ndb_operations=1
     export skip_load_data_operations=1
-    export skip_cluster_operations=1
+    export skip_innodb_cluster_operations=1
     export no_tests=1
 fi
 
@@ -111,7 +111,7 @@ do
             unset skip_import_operations
             unset skip_load_data_operations
             unset no_tests
-            unset skip_cluster_operations
+            unset skip_innodb_cluster_operations
             echo "# Enabling all tests"
             ;;
         tidb)
@@ -195,7 +195,7 @@ do
             echo "# Enabling load data operations tests"
             ;;
         cluster)
-            unset skip_cluster_operations
+            unset skip_innodb_cluster_operations
             unset no_tests
             echo "# Enabling InnoDB Cluster operations tests"
             ;;
@@ -684,7 +684,8 @@ function test_deletion {
     fi
     how_many=$(count_catalog)
     ok_equal "sandboxes_in_catalog" $how_many 0
-    processes_after=$(pgrep $process_name | wc -l | tr -d ' \t')
+    # Allow a few seconds for mysqld processes to exit after send_kill
+    processes_after=$(pgrep -af "$process_name" 2>/dev/null | wc -l | tr -d ' \t')
     ok_equal 'no more '$process_name' processes after deletion' $processes_after $processes_before
     if [ "$fail" != "0" ]
     then
@@ -887,7 +888,9 @@ ok_equal "sandboxes_in_catalog" $how_many 0
 function main_deployment_methods {
     current_test=main_deployment_methods
     test_header main_deployment_methods "" double
-    processes_before=$(pgrep mysqld | wc -l | tr -d ' \t')
+    # Track only mysqld processes that belong to main sandboxes
+    # (msb_*, multi_msb_*, rsandbox_*), so deletion checks are scoped.
+    processes_before=$(pgrep -af mysqld 2>/dev/null | grep -E "msb_|multi_msb_|rsandbox_" | wc -l | tr -d ' \t')
     for V in ${all_versions[*]}
     do
         # We test the main deployment methods
@@ -940,14 +943,16 @@ function main_deployment_methods {
         test_start_restart $V rsandbox_ multiple
         test_start_restart $V multi_msb_ multiple
         echo "# processes $processes_before"
-        test_deletion $V 3 $processes_before
+        # Only count mysqld processes belonging to msb_ / multi_msb_ / rsandbox_ sandboxes
+        test_deletion $V 3 $processes_before "msb_|multi_msb_|rsandbox_"
     done
 }
 
 function load_data_operations {
     current_test=load_data_operations
     test_header load_data_operations "" double
-    processes_before=$(pgrep mysqld | wc -l | tr -d ' \t')
+    # Track only mysqld processes that belong to load-data sandboxes (msb_* and rsandbox_*)
+    processes_before=$(pgrep -af mysqld 2>/dev/null | grep -E "msb_|rsandbox_" | wc -l | tr -d ' \t')
     for V in ${group_versions[*]}
     do
         run dbdeployer deploy single $V
@@ -960,7 +965,8 @@ function load_data_operations {
             run dbdeployer data-load get $archive rsandbox_$version_path
         done
         echo "# processes $processes_before"
-        test_deletion $V 2 $processes_before
+        # Only count mysqld processes belonging to msb_ / rsandbox_ sandboxes
+        test_deletion $V 2 $processes_before "msb_|rsandbox_"
     done
 }
 
@@ -992,7 +998,9 @@ function tidb_deployment_methods {
     fi
     save_custom_options=$CUSTOM_OPTIONS
     CUSTOM_OPTIONS="$CUSTOM_OPTIONS --client-from=$latest_5_7 "
-    processes_before=$(pgrep tidb-server | wc -l | tr -d ' \t')
+    # Track only tidb-server processes belonging to sandboxes under $SANDBOX_HOME
+    # (tidb-server is started with "-config $SBDIR/tidb.toml")
+    processes_before=$(pgrep -af tidb-server 2>/dev/null | grep "$SANDBOX_HOME" | grep "tidb.toml" | wc -l | tr -d ' \t')
     for V in ${tidb_versions[*]}
     do
         # We test the main deployment methods
@@ -1036,7 +1044,8 @@ function tidb_deployment_methods {
         test_ports $V multi_msb_ 3 2
         capture_test run dbdeployer global test
         echo "# processes $processes_before"
-        test_deletion $V 2 $processes_before tidb-server
+        # Only count tidb-server processes for sandboxes under $SANDBOX_HOME
+        test_deletion $V 2 $processes_before "$SANDBOX_HOME/.*/tidb\\.toml"
     done
     CUSTOM_OPTIONS=$save_custom_options
 }
@@ -1479,11 +1488,13 @@ function import_operations {
                 gtid=""
             fi
             # "fake" sandbox running in separate environment
-            alt_dbdeployer deploy single $latest_version --master $gtid --port=8001 --db-user=different --db-password=anotherthing
+            # Use dynamic ports with room for mysqlx/admin ports.
+            port1=$(get_free_port)
+            alt_dbdeployer deploy single $latest_version --master $gtid --port=$port1 --db-user=different --db-password=anotherthing
             check_exit_code
 
-            run dbdeployer deploy single $latest_version --master $gtid --port=8002
-            run dbdeployer import single 127.0.0.1 8001 different anotherthing
+            run dbdeployer deploy single $latest_version --master $gtid --port=$(get_free_port)
+            run dbdeployer import single 127.0.0.1 $port1 different anotherthing
 
             capture_test dbdeployer global test
             
@@ -1527,7 +1538,9 @@ function import_operations {
 function group_operations {
     current_test=group_operations
     test_header group_operations "" double
-    processes_before=$(pgrep mysqld | wc -l | tr -d ' \t')
+    # Track only mysqld processes that belong to group replication sandboxes
+    # (group_msb_* and group_sp_msb_*), so deletion checks are scoped.
+    processes_before=$(pgrep -af mysqld 2>/dev/null | grep -E "group_msb_|group_sp_msb_" | wc -l | tr -d ' \t')
 
     custom_role=R_GROUP
     role_options="--custom-role-name=$custom_role --default-role=$custom_role"
@@ -1567,7 +1580,8 @@ function group_operations {
         test_ports $V group_msb_ 6 3
         test_ports $V group_sp_msb_ 6 3
         check_for_exit group_operations
-        test_deletion $V 2 $processes_before
+        # Only count mysqld processes belonging to group_msb_ / group_sp_msb_ sandboxes
+        test_deletion $V 2 $processes_before "group_msb_|group_sp_msb_"
         results "group $V - after deletion"
     done
 }
@@ -1575,7 +1589,9 @@ function group_operations {
 function multi_source_operations {
     current_test=multi_source_operations
     test_header multi_source_operations "" double
-    processes_before=$(pgrep mysqld | wc -l | tr -d ' \t')
+    # Track only mysqld processes that belong to multi-source sandboxes
+    # (fan_in_msb_* and all_masters_msb_*), so deletion checks are scoped.
+    processes_before=$(pgrep -af mysqld 2>/dev/null | grep -E "fan_in_msb_|all_masters_msb_" | wc -l | tr -d ' \t')
     custom_role=R_MULTI
     role_options="--custom-role-name=$custom_role --default-role=$custom_role"
     latest_8_version=$(dbdeployer info version 8.0)
@@ -1612,7 +1628,8 @@ function multi_source_operations {
         test_use_masters_slaves $V fan_in_msb_ 2 1
         test_use_masters_slaves $V all_masters_msb_ 3 3
         check_for_exit multi_source_operations
-        test_deletion $V 3 $processes_before
+        # Only count mysqld processes belonging to fan_in_msb_ / all_masters_msb_ sandboxes
+        test_deletion $V 3 $processes_before "fan_in_msb_|all_masters_msb_"
         results "multi-source - after deletion"
     done
 }
@@ -1626,7 +1643,7 @@ function pxc_operations {
         echo "Skipping PXC tests on non-Linux system"
         return
     fi
-    processes_before=$(pgrep mysqld | wc -l | tr -d ' \t')
+    processes_before=$(pgrep -af mysqld 2>/dev/null | grep "pxc_msb_" | wc -l | tr -d ' \t')
     for V in ${pxc_versions[*]}
     do
         echo "# PXC operations $V"
@@ -1645,7 +1662,7 @@ function pxc_operations {
             capture_test run dbdeployer global test
             capture_test run dbdeployer global test-replication
         done
-        test_deletion $V 1 $processes_before
+        test_deletion $V 1 $processes_before "pxc_msb_"
         results "pxc $V - after deletion"
     done
 }
@@ -1653,7 +1670,7 @@ function pxc_operations {
 function ndb_operations {
     current_test=ndb_operations
     test_header ndb_operations "" double
-    processes_before=$(pgrep mysqld | wc -l | tr -d ' \t')
+    processes_before=$(pgrep -af mysqld 2>/dev/null | grep "ndb_msb_" | wc -l | tr -d ' \t')
     for V in ${ndb_versions[*]}
     do
         echo "# NDB operations $V"
@@ -1665,19 +1682,78 @@ function ndb_operations {
         test_use_masters_slaves $V ndb_msb_ 3 3
         test_ports $V ndb_msb_ 4 3
         check_for_exit ndb_operations
-        test_deletion $V 1 $processes_before
+        test_deletion $V 1 $processes_before "ndb_msb_"
         results "pxc $V - after deletion"
+    done
+}
+
+# Ensures MySQL Shell is available for each MySQL 8.0 version in group_versions by
+# downloading the shell tarball for that version (if needed) and merging it into
+# the server directory. mysqlsh will then be at $SANDBOX_BINARY/$V/bin/mysqlsh.
+function ensure_mysqlsh_for_80_versions {
+    local tarball_dir="${SANDBOX_TARBALL:-$HOME/downloads}"
+    local shell_name=""
+    mkdir -p "$tarball_dir"
+    local os_flag=""
+    case "$(uname -s)" in
+        Linux)  os_flag="--OS=linux" ;;
+        Darwin) os_flag="--OS=macos" ;;
+    esac
+    for V in ${group_versions[*]}
+    do
+        short_version=${V%.*}
+        if [ "$short_version" != "8.0" ]
+        then
+            continue
+        fi
+        if [ -x "$SANDBOX_BINARY/$V/bin/mysqlsh" ]
+        then
+            continue
+        fi
+        dbdeployer downloads get-by-version $V --flavor=shell $os_flag --newest --dry-run > /tmp/shell_buf 2>/dev/null || true
+        shell_name=$(grep '^Name' /tmp/shell_buf 2>/dev/null | awk '{print $2}')
+        rm -f /tmp/shell_buf
+        if [ -z "$shell_name" ]
+        then
+            echo "# No MySQL Shell tarball found for $V (list may lack shell for this OS); InnoDB Cluster for $V may fail"
+            continue
+        fi
+        if [ ! -f "$tarball_dir/$shell_name" ]
+        then
+            echo "# Downloading MySQL Shell $shell_name for InnoDB Cluster tests"
+            ( cd "$tarball_dir" && dbdeployer downloads get "$shell_name" )
+            if [ $? -ne 0 ]
+            then
+                echo "# Failed to download $shell_name; InnoDB Cluster for $V may fail"
+                continue
+            fi
+        fi
+        echo "# Merging MySQL Shell into $SANDBOX_BINARY/$V for InnoDB Cluster"
+        run dbdeployer unpack "$tarball_dir/$shell_name" --shell --target-server="$V"
+        if [ $? -ne 0 ]
+        then
+            echo "# Failed to merge shell into $V; InnoDB Cluster for $V may fail"
+        fi
     done
 }
 
 function innodb_cluster_operations {
     current_test=innodb_cluster_operations
     test_header innodb_cluster_operations "" double
-    processes_before=$(pgrep mysqld | wc -l | tr -d ' \t')
+    ensure_mysqlsh_for_80_versions
+    # Track only mysqld processes that belong to InnoDB Cluster sandboxes (innodb_msb_*)
+    processes_before=$(pgrep -af mysqld 2>/dev/null | grep "innodb_msb_" | wc -l | tr -d ' \t')
     for V in ${group_versions[*]}
     do
+        # InnoDB Cluster requires MySQL 8.0+
+        short_version=${V%.*}
+        if [ "$short_version" != "8.0" ]
+        then
+            echo "# Skipping InnoDB Cluster for $V (requires 8.0+)"
+            continue
+        fi
         echo "# InnoDB Cluster operations $V"
-        run dbdeployer deploy replication $V --topology=innodb-cluster --mysqlsh-path=$SANDBOX_BINARY/mysqlsh/$V
+        run dbdeployer deploy replication $V --topology=innodb-cluster --mysqlsh-path=$SANDBOX_BINARY/$V
         results "InnoDB Cluster $V"
         v_path=$(echo innodb_msb_$V| tr '.' '_')
 
@@ -1692,7 +1768,8 @@ function innodb_cluster_operations {
         capture_test run dbdeployer global test
         capture_test run dbdeployer global test-replication
 
-        test_deletion $V 1 $processes_before
+        # Pass a pattern so test_deletion only counts innodb_msb_ mysqld processes
+        test_deletion $V 1 $processes_before "innodb_msb_"
         results "innodb-cluster $V - after deletion"
     done
 }
@@ -1750,10 +1827,6 @@ if [ -z "$skip_ndb_operations" ]
 then
     ndb_operations
 fi
-if [ -z "$skip_innodb_cluster_operations" ]
-then
-    innodb_cluster_operations
-fi
 if [ -z "$skip_load_data_operations" ]
 then
     load_data_operations
@@ -1762,9 +1835,9 @@ if [ -z "$skip_custom_replication_methods" ]
 then
     custom_replication_methods
 fi
-if [ -z "$skip_cluster_operations" ]
+if [ -z "$skip_innodb_cluster_operations" ]
 then
-    cluster_operations
+    innodb_cluster_operations
 fi
 
 stop_timer

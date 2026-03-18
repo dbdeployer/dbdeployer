@@ -156,12 +156,13 @@ then
 fi
 
 master_status=/tmp/mstatus$$
-
-if [ "$master_short_version" == "8.0" -o "$master_short_version" == "5.7" -o "$master_short_version" == "5.6" ]
+# SHOW BINARY LOG STATUS from 8.4+; all 8.0.x and earlier use SHOW MASTER STATUS
+minimum_binary_log_status="008004000"
+if [[ "v$master_sortable_version" < "v$minimum_binary_log_status" ]]
 then
     $master_use_script -E -e "show master status" > $master_status
 else
-    $master_use_script -E -e 'show binary log status' > $master_status
+    $master_use_script -E -e "show binary log status" > $master_status
 fi
 
 binlog_file=$(grep File < $master_status | awk '{print $2}')
@@ -239,8 +240,8 @@ else
     fi
 fi
 
-# If master is 8.0 or higher, the slave must be at least 8.0
-if [ "$master_short_version" \> "8.0" ]
+# If master is 8.0 or higher, replication needs public key for caching_sha2_password
+if [ "$master_major" -ge 8 ]
 then
     if [ "$slave_short_version" \< "8.4" ]
     then

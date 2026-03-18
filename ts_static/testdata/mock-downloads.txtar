@@ -7,6 +7,11 @@ cd home
 
 env retries=2
 
+# use a different group-replication base so this script does not conflict with ts or other
+# tests when packages run in parallel (default would use 27500 for group 5.7)
+exec dbdeployer defaults update group-replication-base-port 21000
+exec dbdeployer defaults update group-replication-sp-base-port 22000
+
 # import list of downloads
 
 exec dbdeployer downloads import --retries-on-failure=$retries $file_server/dl.json
@@ -176,10 +181,10 @@ stdout ' all_masters_msb_5_7_97 . all-masters          . 5.7.97  . 127.0.0.1 . .
 stdout ' all_masters_msb_8_0_97 . all-masters          . 8.0.97  . 127.0.0.1 . .23898 33898 23899 33899 23900 33900 .                   . mysql  .     3 '
 stdout ' fan_in_msb_5_7_97      . fan-in               . 5.7.97  . 127.0.0.1 . .20298 20299 20300 .                                     . mysql  .     3 '
 stdout ' fan_in_msb_8_0_97      . fan-in               . 8.0.97  . 127.0.0.1 . .22898 32898 22899 32899 22900 32900 .                   . mysql  .     3 '
-stdout ' group_msb_5_7_97       . group-multi-primary  . 5.7.97  . 127.0.0.1 . .27498 27623 27499 27624 27500 27625 .                   . mysql  .     3 '
-stdout ' group_msb_8_0_97       . group-multi-primary  . 8.0.97  . 127.0.0.1 . .29798 29923 39798 29799 29924 39799 29800 29925 39800 . . mysql  .     3 '
-stdout ' group_sp_msb_5_7_97    . group-single-primary . 5.7.97  . 127.0.0.1 . .28498 28623 28499 28624 28500 28625 .                   . mysql  .     3 '
-stdout ' group_sp_msb_8_0_97    . group-single-primary . 8.0.97  . 127.0.0.1 . .30801 30926 40801 30802 30927 40802 30803 30928 40803 . . mysql  .     3 '
+stdout ' group_msb_5_7_97       . group-multi-primary  . 5.7.97  . 127.0.0.1 . .36498 36623 36499 36624 36500 36625 .                   . mysql  .     3 '
+stdout '.*group_msb_8_0_97.*38801 38926 48801.*'
+stdout ' group_sp_msb_5_7_97    . group-single-primary . 5.7.97  . 127.0.0.1 . .37498 37623 37499 37624 37500 37625 .                   . mysql  .     3 '
+stdout '.*group_sp_msb_8_0_97.*39798 39923 49798.*'
 stdout ' msb_4_1_97             . single               . 4.1.97  . 127.0.0.1 . .4197 .                                                  . mysql  .     0 '
 stdout ' msb_5_0_97             . single               . 5.0.97  . 127.0.0.1 . .5097 .                                                  . mysql  .     0 '
 stdout ' msb_5_1_97             . single               . 5.1.97  . 127.0.0.1 . .5197 .                                                  . mysql  .     0 '

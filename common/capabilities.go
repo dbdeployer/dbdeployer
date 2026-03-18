@@ -195,6 +195,17 @@ var MySQLCapabilities = Capabilities{
 // we would miss the complex ones.
 var FlavorCompositionList = []flavorIndicator{
 	{
+		AllNeeded: false,
+		elements: []elementPath{
+			{"bin", globals.FnAriaChk},
+			{"lib", globals.FnLibMariadbClientA},
+			{"lib", globals.FnLibMariadbClientDylib},
+			{"lib", globals.FnLibMariadbA},
+			{"lib", globals.FnLibMariadbDylib},
+		},
+		flavor: MariaDbFlavor,
+	},
+	{
 		AllNeeded: true,
 		elements: []elementPath{
 			{"bin", globals.FnGarbd},
@@ -240,17 +251,6 @@ var FlavorCompositionList = []flavorIndicator{
 			{"lib", globals.FnNdbdEngineSo},
 		},
 		flavor: NdbFlavor,
-	},
-	{
-		AllNeeded: false,
-		elements: []elementPath{
-			{"bin", globals.FnAriaChk},
-			{"lib", globals.FnLibMariadbClientA},
-			{"lib", globals.FnLibMariadbClientDylib},
-			{"lib", globals.FnLibMariadbA},
-			{"lib", globals.FnLibMariadbDylib},
-		},
-		flavor: MariaDbFlavor,
 	},
 	{
 		AllNeeded: false,

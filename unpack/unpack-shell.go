@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/dbdeployer/dbdeployer/common"
 	"github.com/dbdeployer/dbdeployer/globals"
@@ -29,7 +30,7 @@ func MergeShell(tarball, extension, basedir, destination, bareName string, verbo
 		return fmt.Errorf(globals.ErrNamedDirectoryNotFound, "unpack directory", destination)
 	}
 	if !common.DirExists(destination) {
-		return fmt.Errorf(globals.ErrNamedDirectoryNotFound, "target server directory", destination)
+		return fmt.Errorf("target server directory %s not found (unpack the MySQL server tarball for that version first)", destination)
 	}
 	extracted := path.Join(basedir, bareName)
 	if common.DirExists(extracted) {
@@ -101,5 +102,39 @@ func MergeShell(tarball, extension, basedir, destination, bareName string, verbo
 			return err
 		}
 	}
+
+	// Newer MySQL Shell (e.g. 8.0.45+) has libexec/; bin/mysqlsh expects it relative to installation root
+	sourceLibexec := path.Join(extracted, "libexec")
+	destLibexec := path.Join(destination, "libexec")
+	if common.DirExists(sourceLibexec) {
+		if verbosity >= VERBOSE {
+			fmt.Printf("Copy libexec %s -> %s\n", sourceLibexec, destLibexec)
+		}
+		err = copyDirRecursive(sourceLibexec, destLibexec, verbosity)
+		if err != nil {
+			return fmt.Errorf("copying libexec: %w", err)
+		}
+	}
+
 	return nil
+}
+
+func copyDirRecursive(src, dst string, verbosity int) error {
+	return filepath.Walk(src, func(p string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(src, p)
+		if err != nil {
+			return err
+		}
+		dest := filepath.Join(dst, rel)
+		if info.IsDir() {
+			return os.MkdirAll(dest, info.Mode())
+		}
+		if verbosity >= VERBOSE {
+			fmt.Printf("Copy %s -> %s\n", p, dest)
+		}
+		return common.CopyFile(p, dest)
+	})
 }

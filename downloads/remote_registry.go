@@ -307,22 +307,52 @@ func FindOrGuessTarballByVersionFlavorOS(version, flavor, OS, arch string, minim
 	if OS == "osx" || OS == "macos" || OS == "os x" {
 		OS = "darwin"
 	}
-	if arch == "x86_64" || arch == "x86-64" {
-		arch = "amd64"
+	normalizeArch := func(a string) string {
+		a = strings.ToLower(strings.TrimSpace(a))
+		switch a {
+		case "x86_64", "x86-64", "x86_64bit", "x86-64bit":
+			return "amd64"
+		}
+		return a
 	}
+	arch = normalizeArch(arch)
 	if guess {
 		minimal = false
+	}
+	inferFromName := func(name string) (osHint, archHint string) {
+		lower := strings.ToLower(name)
+		if strings.Contains(lower, "linux") {
+			osHint = "linux"
+		} else if strings.Contains(lower, "darwin") || strings.Contains(lower, "macos") {
+			osHint = "darwin"
+		}
+		if strings.Contains(lower, "x86-64") || strings.Contains(lower, "x86_64") || strings.Contains(lower, "amd64") {
+			archHint = "amd64"
+		} else if strings.Contains(lower, "aarch64") || strings.Contains(lower, "arm64") {
+			archHint = "arm64"
+		}
+		return osHint, archHint
 	}
 	var tbd []TarballDescription
 	newestVersionList := []int{0, 0, 0}
 	for _, tb := range DefaultTarballRegistry.Tarballs {
-		archMatch := true
+		tbOS := strings.ToLower(strings.TrimSpace(tb.OperatingSystem))
+		if tbOS == "" {
+			tbOS, _ = inferFromName(tb.Name)
+		}
+		tbArchNorm := ""
 		if tb.Arch != "" {
-			archMatch = strings.ToLower(tb.Arch) == arch
+			tbArchNorm = normalizeArch(tb.Arch)
+		} else {
+			_, tbArchNorm = inferFromName(tb.Name)
+		}
+		archMatch := true
+		if tbArchNorm != "" {
+			archMatch = tbArchNorm == arch
 		}
 		if (tb.Version == version || tb.ShortVersion == version) &&
 			strings.ToLower(tb.Flavor) == flavor &&
-			strings.ToLower(tb.OperatingSystem) == OS &&
+			tbOS == OS &&
 			archMatch &&
 			(!minimal || minimal == tb.Minimal) {
 
@@ -343,7 +373,7 @@ func FindOrGuessTarballByVersionFlavorOS(version, flavor, OS, arch string, minim
 	}
 
 	if newestVersionList[0] == 0 {
-		return TarballDescription{}, fmt.Errorf("error detecting latest version")
+		return TarballDescription{}, fmt.Errorf("no tarball found for version %s (flavor %s, OS %s, arch %s); add one with 'downloads add-remote' or check your tarball list", version, flavor, OS, arch)
 	}
 	newestVersion := fmt.Sprintf("%d.%d.%d", newestVersionList[0], newestVersionList[1], newestVersionList[2])
 

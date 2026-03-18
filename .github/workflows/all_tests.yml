@@ -1,3 +1,5 @@
+name: All Tests
+
 on: [push, pull_request]
 
 jobs:
@@ -9,17 +11,18 @@ jobs:
 
       steps:
 
+        - name: Check out code
+          uses: actions/checkout@v4
+
+        - name: Set up Go
+          uses: actions/setup-go@v5
+          with:
+            go-version: "1.24"
+
         - name: Install libraries
           run: |
             sudo apt-get update
             sudo apt-get install -y libncurses5 libaio1 libnuma1 bash-completion
-        - name: Set up Go 1.x
-          uses: actions/setup-go@v2
-          with:
-            go-version: ^1.18
-
-        - name: Check out code into the Go module directory
-          uses: actions/checkout@v2
 
         - name: tests
           run: ./scripts/ci.sh
