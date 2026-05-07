@@ -622,6 +622,11 @@ function test_completeness {
             script_postfix="_all"
             folders=(master node1 node2)
             ;;
+        clusterset)
+            scripts=( "${base_scripts[@]}" )
+            script_postfix="_all"
+            folders=(node1 node2 node3 node4 node5 node6)
+            ;;
         *)
         echo "Unknown mode '$mode'"
         exit 1

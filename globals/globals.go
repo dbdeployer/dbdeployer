@@ -153,31 +153,33 @@ const (
 	DryRunLabel  = "dry-run"
 
 	// Instantiated in cmd/replication.go
-	AllMastersLabel     = "all-masters"
-	FanInLabel          = "fan-in"
-	GroupLabel          = "group"
-	MasterIpLabel       = "master-ip"
-	MasterIpValue       = LocalHostIP
-	MasterListLabel     = "master-list"
-	MasterListValue     = "1,2"
-	MasterSlaveLabel    = "master-slave"
-	NodesLabel          = "nodes"
-	NdbNodesLabel       = "ndb-nodes"
-	NodesValue          = 3
-	NdbNodesValue       = 3
-	ReplHistoryDirLabel = "repl-history-dir"
-	SemiSyncLabel       = "semi-sync"
-	ReadOnlyLabel       = "read-only-slaves"
-	SuperReadOnlyLabel  = "super-read-only-slaves"
-	SinglePrimaryLabel  = "single-primary"
-	SlaveListLabel      = "slave-list"
-	SlaveListValue      = "3"
-	TopologyLabel       = "topology"
-	TopologyValue       = "master-slave"
-	PxcLabel            = "pxc"
-	NdbLabel            = "ndb"
-	InnoDBClusterLabel  = "innodb-cluster"
-	ChangeMasterOptions = "change-master-options"
+	AllMastersLabel      = "all-masters"
+	FanInLabel           = "fan-in"
+	GroupLabel           = "group"
+	MasterIpLabel        = "master-ip"
+	MasterIpValue        = LocalHostIP
+	MasterListLabel      = "master-list"
+	MasterListValue      = "1,2"
+	MasterSlaveLabel     = "master-slave"
+	NodesLabel           = "nodes"
+	NdbNodesLabel        = "ndb-nodes"
+	NodesValue           = 3
+	NdbNodesValue        = 3
+	ReplHistoryDirLabel  = "repl-history-dir"
+	SemiSyncLabel        = "semi-sync"
+	ReadOnlyLabel        = "read-only-slaves"
+	SuperReadOnlyLabel   = "super-read-only-slaves"
+	SinglePrimaryLabel   = "single-primary"
+	SlaveListLabel       = "slave-list"
+	SlaveListValue       = "3"
+	TopologyLabel        = "topology"
+	TopologyValue        = "master-slave"
+	PxcLabel             = "pxc"
+	NdbLabel             = "ndb"
+	InnoDBClusterLabel   = "innodb-cluster"
+	ClusterSetLabel      = "clusterset"
+	ClusterSetNodesValue = 6 // default --nodes for --topology=clusterset (HA 3 + DR 3)
+	ChangeMasterOptions  = "change-master-options"
 
 	// Instantiated in cmd/unpack.go and unpack/unpack.go
 	GzExt              = ".gz"
@@ -291,26 +293,29 @@ const (
 	ScriptSysbenchReady       = "sysbench_ready"
 	ScriptWipeAndRestart      = "wipe_and_restart"
 
-	ScriptCheckMsNodes           = "check_ms_nodes"
-	ScriptCheckNodes             = "check_nodes"
-	ScriptCheckNodesCluster      = "check_nodes_cluster"
-	ScriptClearAll               = "clear_all"
-	ScriptInitializeMsNodes      = "initialize_ms_nodes"
-	ScriptInitializeNodes        = "initialize_nodes"
-	ScriptInitializeNodesCluster = "initialize_nodes_cluster"
-	ScriptNoClearAll             = "no_clear_all"
-	ScriptRestartAll             = "restart_all"
-	ScriptSendKillAll            = "send_kill_all"
-	ScriptStartAll               = "start_all"
-	ScriptStatusAll              = "status_all"
-	ScriptStopAll                = "stop_all"
-	ScriptTestReplication        = "test_replication"
-	ScriptTestSbAll              = "test_sb_all"
-	ScriptUseAll                 = "use_all"
-	ScriptUseAllAdmin            = "use_all_admin"
-	ScriptExecAll                = "exec_all"
-	ScriptWipeRestartAll         = "wipe_and_restart_all"
-	ScriptMetadataAll            = "metadata_all"
+	ScriptCheckMsNodes              = "check_ms_nodes"
+	ScriptCheckNodes                = "check_nodes"
+	ScriptCheckNodesCluster         = "check_nodes_cluster"
+	ScriptCheckNodesClusterSet      = "check_nodes_clusterset"
+	ScriptClearAll                  = "clear_all"
+	ScriptInitializeMsNodes         = "initialize_ms_nodes"
+	ScriptInitializeNodes           = "initialize_nodes"
+	ScriptInitializeNodesCluster    = "initialize_nodes_cluster"
+	ScriptInitializeNodesClusterSet = "initialize_nodes_clusterset"
+	ScriptNoClearAll                = "no_clear_all"
+	ScriptRestartAll                = "restart_all"
+	ScriptSendKillAll               = "send_kill_all"
+	ScriptStartAll                  = "start_all"
+	ScriptStatusAll                 = "status_all"
+	ScriptStopAll                   = "stop_all"
+	ScriptTestReplication           = "test_replication"
+	ScriptTestSbAll                 = "test_sb_all"
+	ScriptUseAll                    = "use_all"
+	ScriptUseAllAdmin               = "use_all_admin"
+	ScriptExecAll                   = "exec_all"
+	ScriptWipeRestartAll            = "wipe_and_restart_all"
+	ScriptWipeRestartAllClusterSet  = "wipe_and_restart_all_clusterset"
+	ScriptMetadataAll               = "metadata_all"
 
 	// These constants are kept for reference
 	// although they are not used directly in the code.
@@ -423,6 +428,7 @@ var (
 	MinimumAdminAddressVersion                = NumericVersion{8, 0, 14}
 	MinimumMySQLShellEmbed                    = NumericVersion{8, 0, 4}
 	MinimumInnoDBCluster                      = NumericVersion{8, 0, 0}
+	MinimumInnoDBClusterSet                   = NumericVersion{8, 0, 27}
 )
 
 const (
@@ -473,6 +479,7 @@ var AllowedTopologies = []string{
 	AllMastersLabel,
 	NdbLabel,
 	InnoDBClusterLabel,
+	ClusterSetLabel,
 }
 
 // This structure is not used directly by dbdeployer.

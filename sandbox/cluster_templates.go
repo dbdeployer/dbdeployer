@@ -45,6 +45,18 @@ var (
 	//go:embed templates/cluster/start_all.gotxt
 	clusterStartAllTemplate string
 
+	//go:embed templates/cluster/init_clusterset_nodes.gotxt
+	initClusterSetNodesTemplate string
+
+	//go:embed templates/cluster/check_nodes_clusterset.gotxt
+	checkClusterSetNodesTemplate string
+
+	//go:embed templates/cluster/wipe_and_restart_all_clusterset.gotxt
+	clusterSetWipeAndRestartAllTemplate string
+
+	//go:embed templates/cluster/start_all_clusterset.gotxt
+	clusterSetStartAllTemplate string
+
 	ClusterTemplates = TemplateCollection{
 		globals.TmplClusterOptions: TemplateDesc{
 			Description: "Set the correct my.cnf configurations",
@@ -75,6 +87,26 @@ var (
 			Description: "Start all nodes in a InnoDB Cluster",
 			Notes:       "",
 			Contents:    clusterStartAllTemplate,
+		},
+		globals.TmplInitializeNodesClusterSet: TemplateDesc{
+			Description: "Initialize InnoDB ClusterSet (HA + DR) using MySQL Shell",
+			Notes:       "",
+			Contents:    initClusterSetNodesTemplate,
+		},
+		globals.TmplCheckClusterSetNodes: TemplateDesc{
+			Description: "Checks the status of InnoDB ClusterSet",
+			Notes:       "",
+			Contents:    checkClusterSetNodesTemplate,
+		},
+		globals.TmplWipeAndRestartAllClusterSet: TemplateDesc{
+			Description: "Wipe and restart all nodes in an InnoDB ClusterSet sandbox",
+			Notes:       "",
+			Contents:    clusterSetWipeAndRestartAllTemplate,
+		},
+		globals.TmplStartAllClusterSet: TemplateDesc{
+			Description: "Start all nodes in an InnoDB ClusterSet sandbox",
+			Notes:       "",
+			Contents:    clusterSetStartAllTemplate,
 		},
 	}
 )

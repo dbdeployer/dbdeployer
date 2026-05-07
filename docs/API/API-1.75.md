@@ -737,8 +737,8 @@ dbdeployer 1.69.0 as of 27-Aug-2022 09:25 UTC
     
     $ dbdeployer deploy replication -h
     The replication command allows you to deploy several nodes in replication.
-    Allowed topologies are "master-slave" for all versions, and  "group","innodb-cluster", "all-masters", "fan-in"
-    for  5.7.17+.
+    Allowed topologies are "master-slave" for all versions, and  "group","innodb-cluster", "clusterset", "all-masters", "fan-in"
+    for  5.7.17+ (ClusterSet: MySQL 8.0.27+; 6 nodes by default—node1–3 primary cluster, node4–6 DR cluster).
     Topologies "pcx" and "ndb" are available for binaries of type Percona Xtradb Cluster and MySQL Cluster.
     For this command to work, there must be a directory $HOME/opt/mysql/5.7.21, containing
     the binary files from mysql-5.7.21-$YOUR_OS-x86_64.tar.gz
@@ -760,6 +760,7 @@ dbdeployer 1.69.0 as of 27-Aug-2022 09:25 UTC
     		$ dbdeployer deploy --topology=group replication 5.7
     		$ dbdeployer deploy --topology=group replication 8.0 --single-primary
         $ dbdeployer deploy --topology=innodb-cluster replication 5.7
+        $ dbdeployer deploy --topology=clusterset replication 8.0.27 --nodes=6
     		$ dbdeployer deploy --topology=all-masters replication 5.7
     		$ dbdeployer deploy --topology=fan-in replication 5.7
     		$ dbdeployer deploy --topology=pxc replication pxc5.7.25

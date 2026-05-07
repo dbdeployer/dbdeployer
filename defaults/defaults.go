@@ -69,6 +69,7 @@ type DbdeployerDefaults struct {
 	PxcPrefix                     string `json:"pxc-prefix"`
 	NdbPrefix                     string `json:"ndb-prefix"`
 	InnoDBClusterPrefix           string `json:"innodb-cluster-prefix"`
+	ClusterSetPrefix              string `json:"clusterset-prefix"`
 	DefaultSandboxExecutable      string `json:"default-sandbox-executable"`
 	DownloadNameLinux             string `json:"download-name-linux"`
 	DownloadNameMacOs             string `json:"download-name-macos"`
@@ -138,6 +139,7 @@ var (
 		RemoteTarballUrl:              "https://raw.githubusercontent.com/dbdeployer/dbdeployer/master/downloads/tarball_list.json",
 		NdbPrefix:                     "ndb_msb_",
 		InnoDBClusterPrefix:           "innodb_msb_",
+		ClusterSetPrefix:              "clusterset_msb_",
 		PxcPrefix:                     "pxc_msb_",
 		DefaultSandboxExecutable:      "default",
 		DownloadNameLinux:             "mysql-{{.Version}}-linux-glibc2.17-x86_64{{.Minimal}}.{{.Ext}}",
@@ -275,6 +277,7 @@ func ValidateDefaults(nd DbdeployerDefaults) bool {
 		nd.MultiplePrefix != "" &&
 		nd.PxcPrefix != "" &&
 		nd.NdbPrefix != "" &&
+		nd.ClusterSetPrefix != "" &&
 		nd.DefaultSandboxExecutable != "" &&
 		nd.DownloadUrl != "" &&
 		nd.DownloadNameLinux != "" &&
@@ -412,6 +415,8 @@ func UpdateDefaults(label, value string, storeDefaults bool) {
 		newDefaults.NdbPrefix = value
 	case "innodb-cluster-prefix":
 		newDefaults.InnoDBClusterPrefix = value
+	case "clusterset-prefix":
+		newDefaults.ClusterSetPrefix = value
 	case "default-sandbox-executable":
 		newDefaults.DefaultSandboxExecutable = value
 	case "download-url":
@@ -550,6 +555,7 @@ func DefaultsToMap() common.StringMap {
 		"NdbPrefix":                         currentDefaults.NdbPrefix,
 		"ndb-prefix":                        currentDefaults.NdbPrefix,
 		"innodb-cluster-prefix":             currentDefaults.InnoDBClusterPrefix,
+		"clusterset-prefix":                 currentDefaults.ClusterSetPrefix,
 		"DefaultSandboxExecutable":          currentDefaults.DefaultSandboxExecutable,
 		"default-sandbox-executable":        currentDefaults.DefaultSandboxExecutable,
 		"download-url":                      currentDefaults.DownloadUrl,
