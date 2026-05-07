@@ -183,4 +183,9 @@ const (
 	TmplCheckClusterNodes        = "check_nodes_cluster"
 	TmplWipeAndRestartAllCluster = "wipe_and_restart_all_cluster"
 	TmplStartAllCluster          = "start_all_cluster"
+
+	TmplInitializeNodesClusterSet   = "initialize_nodes_clusterset"
+	TmplCheckClusterSetNodes        = "check_nodes_clusterset"
+	TmplWipeAndRestartAllClusterSet = "wipe_and_restart_all_clusterset"
+	TmplStartAllClusterSet          = "start_all_clusterset"
 )

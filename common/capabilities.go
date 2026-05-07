@@ -86,6 +86,7 @@ const (
 	CloneServer                 = "clone-server"
 	CircularReplication         = "circular-replication"
 	InnoDBCluster               = "innodb-cluster"
+	InnoDBClusterSet            = "innodb-cluster-set"
 )
 
 var MySQLCapabilities = Capabilities{
@@ -185,6 +186,10 @@ var MySQLCapabilities = Capabilities{
 		InnoDBCluster: {
 			Description: "Allow InnoDB Cluster",
 			Since:       globals.MinimumInnoDBCluster,
+		},
+		InnoDBClusterSet: {
+			Description: "Allow InnoDB ClusterSet",
+			Since:       globals.MinimumInnoDBClusterSet,
 		},
 	},
 }

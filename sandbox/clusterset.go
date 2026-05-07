@@ -1,0 +1,416 @@
+// DBDeployer - The MySQL Sandbox
+// Copyright © 2025-2026 Roberto Garcia de Bem
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package sandbox
+
+import (
+	"fmt"
+	"os"
+	"path"
+	"regexp"
+	"time"
+
+	"github.com/dbdeployer/dbdeployer/common"
+	"github.com/dbdeployer/dbdeployer/concurrent"
+	"github.com/dbdeployer/dbdeployer/defaults"
+	"github.com/dbdeployer/dbdeployer/globals"
+	"github.com/pkg/errors"
+)
+
+// CreateClusterSetReplication deploys two 3-node InnoDB Clusters (node1–3 primary, node4–6 DR)
+// wired as one InnoDB ClusterSet, initialized via MySQL Shell AdminAPI.
+func CreateClusterSetReplication(sandboxDef SandboxDef, origin string, nodes int, masterIp string) error {
+	var execLists []concurrent.ExecutionList
+	var err error
+
+	if nodes != globals.ClusterSetNodesValue {
+		return fmt.Errorf("topology '%s' requires exactly %d nodes (got %d): primary cluster node1–3, replica cluster node4–6",
+			globals.ClusterSetLabel, globals.ClusterSetNodesValue, nodes)
+	}
+
+	var logger *defaults.Logger
+	if sandboxDef.Logger != nil {
+		logger = sandboxDef.Logger
+	} else {
+		var fileName string
+		var err error
+		logger, fileName, err = defaults.NewLogger(common.LogDirName(), "clusterset")
+		if err != nil {
+			return err
+		}
+		sandboxDef.LogFileName = common.ReplaceLiteralHome(fileName)
+	}
+
+	readOnlyOptions, err := checkReadOnlyFlags(sandboxDef)
+	if err != nil {
+		return err
+	}
+	if readOnlyOptions != "" {
+		return fmt.Errorf("options --read-only and --super-read-only can't be used for ClusterSet topology\n" +
+			"as InnoDB Cluster / ClusterSet set them when needed")
+	}
+
+	isMinimumClusterSet, err := common.HasCapability(sandboxDef.Flavor, common.InnoDBClusterSet, sandboxDef.Version)
+	if err != nil {
+		return err
+	}
+	if !isMinimumClusterSet {
+		return fmt.Errorf(globals.ErrFeatureRequiresCapability, "InnoDB ClusterSet", common.MySQLFlavor,
+			common.IntSliceToDottedString(globals.MinimumInnoDBClusterSet))
+	}
+
+	vList, err := common.VersionToList(sandboxDef.Version)
+	if err != nil {
+		return err
+	}
+	rev := vList[2]
+	versionAtLeast84, err := common.GreaterOrEqualVersion(sandboxDef.Version, []int{8, 4, 0})
+	if err != nil {
+		return err
+	}
+	basePort := computeBaseport(sandboxDef.Port + defaults.Defaults().GroupReplicationBasePort + (rev * 100))
+	if sandboxDef.BasePort > 0 {
+		basePort = sandboxDef.BasePort
+	}
+	sandboxDef.PortAsServerId = true
+	if common.DirExists(sandboxDef.SandboxDir) {
+		sandboxDef, err = checkDirectory(sandboxDef)
+		if err != nil {
+			return err
+		}
+	}
+	firstGroupPort, err := common.FindFreePort(basePort+1, sandboxDef.InstalledPorts, nodes)
+	if err != nil {
+		return errors.Wrapf(err, "error retrieving free port for replication")
+	}
+	basePort = firstGroupPort - 1
+	baseGroupPort := basePort + defaults.Defaults().GroupPortDelta
+	firstGroupPort, err = common.FindFreePort(baseGroupPort+1, sandboxDef.InstalledPorts, nodes)
+	if err != nil {
+		return errors.Wrapf(err, "error retrieving group replication free port")
+	}
+	baseGroupPort = firstGroupPort - 1
+	for checkPort := basePort + 1; checkPort < basePort+nodes+1; checkPort++ {
+		err = checkPortAvailability("CreateClusterSetReplication", sandboxDef.SandboxDir, sandboxDef.InstalledPorts, checkPort)
+		if err != nil {
+			return err
+		}
+	}
+	for checkPort := baseGroupPort + 1; checkPort < baseGroupPort+nodes+1; checkPort++ {
+		err = checkPortAvailability("CreateClusterSetReplication-cluster", sandboxDef.SandboxDir, sandboxDef.InstalledPorts, checkPort)
+		if err != nil {
+			return err
+		}
+	}
+	baseMysqlxPort, err := getBaseMysqlxPort(basePort, sandboxDef, nodes)
+	if err != nil {
+		return err
+	}
+	baseAdminPort, err := getBaseAdminPort(basePort, sandboxDef, nodes)
+	if err != nil {
+		return err
+	}
+	err = os.Mkdir(sandboxDef.SandboxDir, globals.PublicDirectoryAttr)
+	if err != nil {
+		return err
+	}
+	common.AddToCleanupStack(common.RmdirAll, "RmdirAll", sandboxDef.SandboxDir)
+	logger.Printf("Creating directory %s\n", sandboxDef.SandboxDir)
+	timestamp := time.Now()
+	slaveLabel := defaults.Defaults().SlavePrefix
+	slaveAbbr := defaults.Defaults().SlaveAbbr
+	masterAbbr := defaults.Defaults().MasterAbbr
+	masterLabel := defaults.Defaults().MasterName
+	masterList := makeNodesList(nodes)
+	slaveList := masterList
+	changeMasterExtra := setChangeMasterProperties("", sandboxDef.ChangeMasterOptions, logger)
+	nodeLabel := defaults.Defaults().NodePrefix
+	stopNodeList := ""
+	for i := nodes; i > 0; i-- {
+		stopNodeList += fmt.Sprintf(" %d", i)
+	}
+	var data = common.StringMap{
+		"ShellPath":         sandboxDef.ShellPath,
+		"MysqlshPath":       sandboxDef.MysqlshPath,
+		"Copyright":         globals.ShellScriptCopyright,
+		"AppVersion":        common.VersionDef,
+		"DateTime":          timestamp.Format(time.UnixDate),
+		"SandboxDir":        sandboxDef.SandboxDir,
+		"MasterIp":          masterIp,
+		"MasterList":        masterList,
+		"NodeLabel":         nodeLabel,
+		"SlaveList":         slaveList,
+		"RplUser":           sandboxDef.RplUser,
+		"RplPassword":       sandboxDef.RplPassword,
+		"DbPassword":        sandboxDef.DbPassword,
+		"SlaveLabel":        slaveLabel,
+		"SlaveAbbr":         slaveAbbr,
+		"ChangeMasterExtra": changeMasterExtra,
+		"MasterLabel":       masterLabel,
+		"MasterAbbr":        masterAbbr,
+		"StopNodeList":      stopNodeList,
+		"Nodes":             []common.StringMap{},
+	}
+	connectionString := ""
+	for i := 0; i < nodes; i++ {
+		groupPort := baseGroupPort + i + 1
+		if connectionString != "" {
+			connectionString += ","
+		}
+		connectionString += fmt.Sprintf("127.0.0.1:%d", groupPort)
+	}
+	logger.Printf("Creating connection string %s\n", connectionString)
+
+	sbType := "clusterset"
+	logger.Printf("Defining sandbox type %s\n", sbType)
+
+	sbDesc := common.SandboxDescription{
+		Basedir: sandboxDef.Basedir,
+		SBType:  sbType,
+		Version: sandboxDef.Version,
+		Flavor:  sandboxDef.Flavor,
+		Port:    []int{},
+		Nodes:   nodes,
+		NodeNum: 0,
+		LogFile: sandboxDef.LogFileName,
+	}
+
+	sbItem := defaults.SandboxItem{
+		Origin:      sbDesc.Basedir,
+		SBType:      sbDesc.SBType,
+		Version:     sandboxDef.Version,
+		Flavor:      sandboxDef.Flavor,
+		Port:        []int{},
+		Nodes:       []string{},
+		Destination: sandboxDef.SandboxDir,
+	}
+
+	if sandboxDef.LogFileName != "" {
+		sbItem.LogDirectory = common.DirName(sandboxDef.LogFileName)
+	}
+
+	for i := 1; i <= nodes; i++ {
+		groupPort := baseGroupPort + i
+		sandboxDef.Port = basePort + i
+		data["Nodes"] = append(data["Nodes"].([]common.StringMap), common.StringMap{
+			"ShellPath":         sandboxDef.ShellPath,
+			"MysqlshPath":       sandboxDef.MysqlshPath,
+			"Copyright":         globals.ShellScriptCopyright,
+			"AppVersion":        common.VersionDef,
+			"DateTime":          timestamp.Format(time.UnixDate),
+			"Node":              i,
+			"NodePort":          sandboxDef.Port,
+			"MasterIp":          masterIp,
+			"NodeLabel":         nodeLabel,
+			"SlaveLabel":        slaveLabel,
+			"SlaveAbbr":         slaveAbbr,
+			"ChangeMasterExtra": changeMasterExtra,
+			"MasterLabel":       masterLabel,
+			"MasterAbbr":        masterAbbr,
+			"SandboxDir":        sandboxDef.SandboxDir,
+			"StopNodeList":      stopNodeList,
+			"RplUser":           sandboxDef.RplUser,
+			"RplPassword":       sandboxDef.RplPassword})
+
+		sandboxDef.DirName = fmt.Sprintf("%s%d", nodeLabel, i)
+		sandboxDef.MorePorts = []int{groupPort}
+		sandboxDef.ServerId = setServerId(sandboxDef, i)
+		sbItem.Nodes = append(sbItem.Nodes, sandboxDef.DirName)
+		sbItem.Port = append(sbItem.Port, sandboxDef.Port)
+		sbDesc.Port = append(sbDesc.Port, sandboxDef.Port)
+		sbItem.Port = append(sbItem.Port, groupPort)
+		sbDesc.Port = append(sbDesc.Port, groupPort)
+
+		if !sandboxDef.RunConcurrently {
+			installationMessage := "Installing and starting %s %d\n"
+			if sandboxDef.SkipStart {
+				installationMessage = "Installing %s %d\n"
+			}
+			common.CondPrintf(installationMessage, nodeLabel, i)
+			logger.Printf(installationMessage, nodeLabel, i)
+		}
+
+		basePortText := fmt.Sprintf("%08d", basePort)
+		replicationData := common.StringMap{
+			"BasePort":       basePortText,
+			"GroupSeeds":     connectionString,
+			"LocalAddresses": fmt.Sprintf("%s:%d", masterIp, groupPort),
+		}
+
+		tmplOptions := globals.TmplClusterOptions
+		if versionAtLeast84 {
+			tmplOptions = globals.TmplClusterOptions84
+		}
+
+		replOptionsText, err := common.SafeTemplateFill("group_replication",
+			ClusterTemplates[tmplOptions].Contents, replicationData)
+
+		if err != nil {
+			return err
+		}
+		sandboxDef.ReplOptions = SingleTemplates[globals.TmplReplicationOptions].Contents + "\n" + replOptionsText
+
+		reMasterIp := regexp.MustCompile(`127\.0\.0\.1`)
+		sandboxDef.ReplOptions = reMasterIp.ReplaceAllString(sandboxDef.ReplOptions, masterIp)
+
+		sandboxDef.ReplOptions += fmt.Sprintf("\n%s\n", SingleTemplates[globals.TmplGtidOptions57].Contents)
+
+		tmplKey := globals.TmplReplCrashSafeOptions
+		if versionAtLeast84 {
+			tmplKey = globals.TmplReplCrashSafeOptions84
+		}
+		sandboxDef.ReplOptions += fmt.Sprintf("\n%s\n", SingleTemplates[tmplKey].Contents)
+		isMinimumMySQLXDefault, err := common.HasCapability(sandboxDef.Flavor, common.MySQLXDefault, sandboxDef.Version)
+		if err != nil {
+			return err
+		}
+		if isMinimumMySQLXDefault || sandboxDef.EnableMysqlX {
+			sandboxDef.MysqlXPort = baseMysqlxPort + i
+			if !sandboxDef.DisableMysqlX {
+				sbDesc.Port = append(sbDesc.Port, baseMysqlxPort+i)
+				sbItem.Port = append(sbItem.Port, baseMysqlxPort+i)
+				logger.Printf("adding port %d to node %d\n", baseMysqlxPort+i, i)
+			}
+		}
+		if sandboxDef.EnableAdminAddress {
+			sandboxDef.AdminPort = baseAdminPort + i
+			sbDesc.Port = append(sbDesc.Port, baseAdminPort+i)
+			sbItem.Port = append(sbItem.Port, baseAdminPort+i)
+			logger.Printf("adding port %d to node %d\n", baseAdminPort+i, i)
+		}
+		sandboxDef.Multi = true
+		sandboxDef.LoadGrants = true
+		sandboxDef.Prompt = fmt.Sprintf("%s%d", nodeLabel, i)
+		sandboxDef.SBType = "cluster-node"
+		sandboxDef.NodeNum = i
+		logger.Printf("Create single sandbox for node %d\n", i)
+		execList, err := CreateChildSandbox(sandboxDef)
+		if err != nil {
+			return fmt.Errorf(globals.ErrCreatingSandbox, err)
+		}
+		execLists = append(execLists, execList...)
+		var dataNode = common.StringMap{
+			"ShellPath":         sandboxDef.ShellPath,
+			"Copyright":         globals.ShellScriptCopyright,
+			"AppVersion":        common.VersionDef,
+			"DateTime":          timestamp.Format(time.UnixDate),
+			"Node":              i,
+			"NodePort":          sandboxDef.Port,
+			"NodeLabel":         nodeLabel,
+			"MasterLabel":       masterLabel,
+			"MasterAbbr":        masterAbbr,
+			"ChangeMasterExtra": changeMasterExtra,
+			"SlaveLabel":        slaveLabel,
+			"SlaveAbbr":         slaveAbbr,
+			"SandboxDir":        sandboxDef.SandboxDir,
+		}
+		logger.Printf("Create node script for node %d\n", i)
+		err = writeScript(logger, MultipleTemplates, fmt.Sprintf("n%d", i), globals.TmplNode, sandboxDef.SandboxDir, dataNode, true)
+		if err != nil {
+			return err
+		}
+		if sandboxDef.EnableAdminAddress {
+			err = writeScript(logger, MultipleTemplates, fmt.Sprintf("na%d", i), globals.TmplNodeAdmin, sandboxDef.SandboxDir, dataNode, true)
+			if err != nil {
+				return err
+			}
+
+		}
+	}
+	logger.Printf("Writing sandbox description in %s\n", sandboxDef.SandboxDir)
+	err = common.WriteSandboxDescription(sandboxDef.SandboxDir, sbDesc)
+	if err != nil {
+		return errors.Wrapf(err, "unable to write sandbox description")
+	}
+	err = defaults.UpdateCatalog(sandboxDef.SandboxDir, sbItem)
+	if err != nil {
+		return errors.Wrapf(err, "unable to update catalog")
+	}
+
+	logger.Printf("Writing ClusterSet scripts\n")
+	sbMultiple := ScriptBatch{
+		tc:         MultipleTemplates,
+		logger:     logger,
+		data:       data,
+		sandboxDir: sandboxDef.SandboxDir,
+		scripts: []ScriptDef{
+			{globals.ScriptStartAll, globals.TmplStartMulti, true},
+			{globals.ScriptStatusAll, globals.TmplStatusMulti, true},
+			{globals.ScriptTestSbAll, globals.TmplTestSbMulti, true},
+			{globals.ScriptStopAll, globals.TmplStopMulti, true},
+			{globals.ScriptClearAll, globals.TmplClearMulti, true},
+			{globals.ScriptSendKillAll, globals.TmplSendKillMulti, true},
+			{globals.ScriptUseAll, globals.TmplUseMulti, true},
+			{globals.ScriptMetadataAll, globals.TmplMetadataMulti, true},
+			{globals.ScriptReplicateFrom, globals.TmplReplicateFromMulti, true},
+			{globals.ScriptSysbench, globals.TmplSysbenchMulti, true},
+			{globals.ScriptSysbenchReady, globals.TmplSysbenchReadyMulti, true},
+			{globals.ScriptExecAll, globals.TmplExecMulti, true},
+		},
+	}
+
+	sbRepl := ScriptBatch{
+		tc:         ReplicationTemplates,
+		logger:     logger,
+		data:       data,
+		sandboxDir: sandboxDef.SandboxDir,
+		scripts: []ScriptDef{
+			{globals.ScriptTestReplication, globals.TmplTestReplication, true},
+			{globals.ScriptRestartAll, globals.TmplRestartAll, true},
+		},
+	}
+
+	sbClusterSet := ScriptBatch{
+		tc:         ClusterTemplates,
+		logger:     logger,
+		data:       data,
+		sandboxDir: sandboxDef.SandboxDir,
+		scripts: []ScriptDef{
+			{globals.ScriptInitializeNodesClusterSet, globals.TmplInitializeNodesClusterSet, true},
+			{globals.ScriptCheckNodesClusterSet, globals.TmplCheckClusterSetNodes, true},
+			{globals.ScriptWipeRestartAllClusterSet, globals.TmplWipeAndRestartAllClusterSet, true},
+			{globals.ScriptStartAll, globals.TmplStartAllClusterSet, true},
+		},
+	}
+
+	for _, sb := range []ScriptBatch{sbMultiple, sbClusterSet, sbRepl} {
+		err := writeScripts(sb)
+		if err != nil {
+			return err
+		}
+	}
+	if sandboxDef.EnableAdminAddress {
+		logger.Printf("Creating admin script for all nodes\n")
+		err = writeScript(logger, MultipleTemplates, globals.ScriptUseAllAdmin,
+			globals.TmplUseMultiAdmin, sandboxDef.SandboxDir, data, true)
+		if err != nil {
+			return err
+		}
+	}
+
+	logger.Printf("Running parallel tasks\n")
+	concurrent.RunParallelTasksByPriority(execLists)
+	if !sandboxDef.SkipStart {
+		common.CondPrintln(path.Join(common.ReplaceLiteralHome(sandboxDef.SandboxDir), globals.ScriptInitializeNodesClusterSet))
+		logger.Printf("Running ClusterSet initialization script\n")
+		_, err := common.RunCmd(path.Join(sandboxDef.SandboxDir, globals.ScriptInitializeNodesClusterSet))
+		if err != nil {
+			return fmt.Errorf("error initializing InnoDB ClusterSet: %s", err)
+		}
+	}
+	common.CondPrintf("InnoDB ClusterSet directory installed in %s\n", common.ReplaceLiteralHome(sandboxDef.SandboxDir))
+	common.CondPrintf("run 'dbdeployer usage multiple' for basic instructions'\n")
+	return nil
+}

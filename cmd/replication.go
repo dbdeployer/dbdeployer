@@ -99,8 +99,8 @@ var replicationCmd = &cobra.Command{
 	//Args:  cobra.ExactArgs(1),
 	Short: "create replication sandbox",
 	Long: `The replication command allows you to deploy several nodes in replication.
-Allowed topologies are "master-slave" for all versions, and  "group", "all-masters", "fan-in"
-for  5.7.17+.
+Allowed topologies are "master-slave" for all versions, and  "group", "innodb-cluster", "clusterset", "all-masters", "fan-in"
+for  5.7.17+ (InnoDB Cluster / ClusterSet require MySQL 8.0+; ClusterSet requires 8.0.27+ and exactly 6 nodes).
 Topologies "pcx" and "ndb" are available for binaries of type Percona Xtradb Cluster and MySQL Cluster.
 For this command to work, there must be a directory $HOME/opt/mysql/5.7.21, containing
 the binary files from mysql-5.7.21-$YOUR_OS-x86_64.tar.gz
@@ -126,6 +126,7 @@ Use the "unpack" command to get the tarball into the right directory.
 		$ dbdeployer deploy --topology=fan-in replication 5.7
 		$ dbdeployer deploy --topology=pxc replication pxc5.7.25
 		$ dbdeployer deploy --topology=ndb replication ndb8.0.14
+		$ dbdeployer deploy --topology=clusterset replication 8.0.27 --nodes=6 --mysqlsh-path=$HOME/opt/mysql/8.0.27
 	`,
 	Annotations: map[string]string{"export": ExportAnnotationToJson(ReplicationExport)},
 }
