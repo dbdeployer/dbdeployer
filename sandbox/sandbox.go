@@ -110,6 +110,9 @@ type SandboxDef struct {
 	ExposeDdTables       bool             // Show hidden data dictionary tables (MySQL 8.0.0+)
 	RunConcurrently      bool             // Run multiple sandbox creation concurrently
 	MysqlshPath          string           // Path to mysqlsh executable
+	MysqlshExe           string           // Resolved mysqlsh binary path
+	MysqlRouterPath      string           // From defaults: empty, AUTO sentinel, or explicit router path
+	MysqlRouterExe       string           // Resolved mysqlrouter path when bootstrap is enabled
 }
 
 type ScriptDef struct {
@@ -620,13 +623,10 @@ func createSingleSandbox(sandboxDef SandboxDef) (execList []concurrent.Execution
 		}
 	}
 	var mysqlshExecutable string
-	if mysqlshPath := defaults.Defaults().MysqlshPath; mysqlshPath != "" {
-		mysqlshExecutable = mysqlshPath + "/bin/mysqlsh"
+	if sandboxDef.MysqlshExe != "" {
+		mysqlshExecutable = sandboxDef.MysqlshExe
 	} else {
-		mysqlshExecutable = fmt.Sprintf("%s/bin/mysqlsh", sandboxDef.Basedir)
-	}
-	if !common.ExecExists(mysqlshExecutable) {
-		mysqlshExecutable = "mysqlsh"
+		mysqlshExecutable = common.ResolveMysqlshExecutable(sandboxDef.MysqlshPath, sandboxDef.Basedir)
 	}
 	if sandboxDef.MyCnfFile != "" {
 		if !common.FileExists(sandboxDef.MyCnfFile) {

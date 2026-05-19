@@ -57,6 +57,24 @@ var (
 	//go:embed templates/cluster/start_all_clusterset.gotxt
 	clusterSetStartAllTemplate string
 
+	//go:embed templates/cluster/start_mysql_router.gotxt
+	startMysqlRouterTemplate string
+
+	//go:embed templates/cluster/stop_mysql_router.gotxt
+	stopMysqlRouterTemplate string
+
+	//go:embed templates/cluster/status_mysql_router.gotxt
+	statusMysqlRouterTemplate string
+
+	//go:embed templates/cluster/mysqlrouter_connections.gotxt
+	mysqlrouterConnectionsTemplate string
+
+	//go:embed templates/cluster/router_writer.gotxt
+	routerWriterTemplate string
+
+	//go:embed templates/cluster/router_reader.gotxt
+	routerReaderTemplate string
+
 	ClusterTemplates = TemplateCollection{
 		globals.TmplClusterOptions: TemplateDesc{
 			Description: "Set the correct my.cnf configurations",
@@ -107,6 +125,36 @@ var (
 			Description: "Start all nodes in an InnoDB ClusterSet sandbox",
 			Notes:       "",
 			Contents:    clusterSetStartAllTemplate,
+		},
+		globals.TmplStartMysqlRouter: TemplateDesc{
+			Description: "Start MySQL Router (bootstrapped under mysqlrouter/)",
+			Notes:       "",
+			Contents:    startMysqlRouterTemplate,
+		},
+		globals.TmplStopMysqlRouter: TemplateDesc{
+			Description: "Stop MySQL Router",
+			Notes:       "",
+			Contents:    stopMysqlRouterTemplate,
+		},
+		globals.TmplStatusMysqlRouter: TemplateDesc{
+			Description: "Show MySQL Router process / pid status",
+			Notes:       "",
+			Contents:    statusMysqlRouterTemplate,
+		},
+		globals.TmplMysqlRouterConnections: TemplateDesc{
+			Description: "Print Router config listen ports and mysql client hints",
+			Notes:       "",
+			Contents:    mysqlrouterConnectionsTemplate,
+		},
+		globals.TmplRouterWriter: TemplateDesc{
+			Description: "mysql client or mysqlsh (x) through Router R/W",
+			Notes:       "",
+			Contents:    routerWriterTemplate,
+		},
+		globals.TmplRouterReader: TemplateDesc{
+			Description: "mysql client or mysqlsh (x) through Router R/O",
+			Notes:       "",
+			Contents:    routerReaderTemplate,
 		},
 	}
 )

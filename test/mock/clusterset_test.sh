@@ -59,7 +59,7 @@ do
     do
         version=${vers}.${rev}
         version_name=$(echo $version | tr '.' '_')
-        run dbdeployer deploy replication $version --topology=clusterset --nodes=6 --mysqlsh-path=$SANDBOX_BINARY/$version
+        run dbdeployer deploy replication $version --topology=cluster-set --mysqlsh-path=$SANDBOX_BINARY/$version
 
         test_completeness $version clusterset_msb_ clusterset
 

@@ -16,6 +16,8 @@
 package cmd
 
 import (
+	"path"
+
 	"github.com/dbdeployer/dbdeployer/common"
 	"github.com/dbdeployer/dbdeployer/globals"
 	"github.com/dbdeployer/dbdeployer/sandbox"
@@ -37,6 +39,9 @@ func replicationSandbox(cmd *cobra.Command, args []string) {
 	ndbNodes, _ := flags.GetInt(globals.NdbNodesLabel)
 	nodes, _ := flags.GetInt(globals.NodesLabel)
 	topology, _ := flags.GetString(globals.TopologyLabel)
+	if topology == globals.ClusterSetLabel && !flags.Changed(globals.NodesLabel) {
+		nodes = globals.ClusterSetNodesValue
+	}
 	masterIp, _ := flags.GetString(globals.MasterIpLabel)
 	masterList, _ := flags.GetString(globals.MasterListLabel)
 	slaveList, _ := flags.GetString(globals.SlaveListLabel)
@@ -77,6 +82,20 @@ func replicationSandbox(cmd *cobra.Command, args []string) {
 			globals.NdbLabel)
 
 	}
+	isClusterTopology := topology == globals.InnoDBClusterLabel || topology == globals.ClusterSetLabel
+	if isClusterTopology && !common.ExecExists(sd.MysqlshExe) {
+		common.Exitf(1, "MySQL Shell not found (resolved %q from --%s=%q). Install mysqlsh or pass --mysqlsh-path=/path/to/install-or/bin/mysqlsh",
+			sd.MysqlshExe, globals.MysqlshPathLabel, sd.MysqlshPath)
+	}
+	if sd.MysqlRouterPath != "" {
+		if !isClusterTopology {
+			common.Exitf(1, "persistent %s only supported for %s and %s topologies",
+				globals.MysqlRouterPathLabel, globals.InnoDBClusterLabel, globals.ClusterSetLabel)
+		}
+		exe, err := common.ResolveMysqlRouterExecutable(sd.MysqlRouterPath, path.Dir(sd.Basedir), sd.Version)
+		common.ErrCheckExitf(err, 1, "%s", err)
+		sd.MysqlRouterExe = exe
+	}
 	origin := args[0]
 	if args[0] != sd.BasedirName {
 		origin = sd.BasedirName
@@ -99,8 +118,8 @@ var replicationCmd = &cobra.Command{
 	//Args:  cobra.ExactArgs(1),
 	Short: "create replication sandbox",
 	Long: `The replication command allows you to deploy several nodes in replication.
-Allowed topologies are "master-slave" for all versions, and  "group", "innodb-cluster", "clusterset", "all-masters", "fan-in"
-for  5.7.17+ (InnoDB Cluster / ClusterSet require MySQL 8.0+; ClusterSet requires 8.0.27+ and exactly 6 nodes).
+Allowed topologies are "master-slave" for all versions, and  "group", "innodb-cluster", "cluster-set", "all-masters", "fan-in"
+for  5.7.17+ (InnoDB Cluster / ClusterSet require MySQL 8.0+; cluster-set requires 8.0.27+ and 6 nodes by default).
 Topologies "pcx" and "ndb" are available for binaries of type Percona Xtradb Cluster and MySQL Cluster.
 For this command to work, there must be a directory $HOME/opt/mysql/5.7.21, containing
 the binary files from mysql-5.7.21-$YOUR_OS-x86_64.tar.gz
@@ -126,7 +145,7 @@ Use the "unpack" command to get the tarball into the right directory.
 		$ dbdeployer deploy --topology=fan-in replication 5.7
 		$ dbdeployer deploy --topology=pxc replication pxc5.7.25
 		$ dbdeployer deploy --topology=ndb replication ndb8.0.14
-		$ dbdeployer deploy --topology=clusterset replication 8.0.27 --nodes=6 --mysqlsh-path=$HOME/opt/mysql/8.0.27
+		$ dbdeployer deploy --topology=cluster-set replication 8.0.27 --mysqlsh-path=$HOME/opt/mysql/8.0.27
 	`,
 	Annotations: map[string]string{"export": ExportAnnotationToJson(ReplicationExport)},
 }
@@ -137,7 +156,7 @@ func init() {
 	replicationCmd.PersistentFlags().StringP(globals.SlaveListLabel, "", "", "Which nodes are slaves in a multi-source deployment")
 	replicationCmd.PersistentFlags().StringP(globals.MasterIpLabel, "", globals.MasterIpValue, "Which IP the slaves will connect to")
 	replicationCmd.PersistentFlags().StringP(globals.TopologyLabel, "t", globals.TopologyValue, "Which topology will be installed")
-	replicationCmd.PersistentFlags().IntP(globals.NodesLabel, "n", globals.NodesValue, "How many nodes will be installed")
+	replicationCmd.PersistentFlags().IntP(globals.NodesLabel, "n", globals.NodesValue, "How many nodes will be installed (default 6 for cluster-set topology)")
 	replicationCmd.PersistentFlags().IntP(globals.NdbNodesLabel, "", globals.NdbNodesValue, "How many NDB nodes will be installed")
 	replicationCmd.PersistentFlags().BoolP(globals.SinglePrimaryLabel, "", false, "Using single primary for group replication")
 	replicationCmd.PersistentFlags().BoolP(globals.SemiSyncLabel, "", false, "Use semi-synchronous plugin")

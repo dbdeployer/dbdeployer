@@ -358,7 +358,9 @@ func fillSandboxDefinition(cmd *cobra.Command, args []string, usingImport bool) 
 	sd.InitGeneralLog, _ = flags.GetBool(globals.InitGeneralLogLabel)
 	sd.EnableGeneralLog, _ = flags.GetBool(globals.EnableGeneralLogLabel)
 	sd.ShellPath = defaults.Defaults().ShellPath
-	sd.MysqlshPath = defaults.Defaults().MysqlshPath
+	sd.MysqlshPath = flagOrDefault(cmd, globals.MysqlshPathLabel, defaults.Defaults().MysqlshPath)
+	sd.MysqlRouterPath = flagOrDefault(cmd, globals.MysqlRouterPathLabel, defaults.Defaults().MysqlRouterPath)
+	sd.MysqlshExe = common.ResolveMysqlshExecutable(sd.MysqlshPath, sd.Basedir)
 
 	if sd.DisableMysqlX && sd.EnableMysqlX {
 		common.Exit(1, "flags --enable-mysqlx and --disable-mysqlx cannot be used together")

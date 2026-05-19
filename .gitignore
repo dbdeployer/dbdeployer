@@ -1,6 +1,7 @@
 *~
 .idea/
 .vscode/
+.cursor/
 test/logs/
 results*.txt
 test/results*.txt

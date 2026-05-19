@@ -159,7 +159,8 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 	}
 	var data = common.StringMap{
 		"ShellPath":         sandboxDef.ShellPath,
-		"MysqlshPath":       sandboxDef.MysqlshPath,
+		"MysqlshPath":       sandboxDef.MysqlshExe,
+		"MysqlRouterExe":    sandboxDef.MysqlRouterExe,
 		"Copyright":         globals.ShellScriptCopyright,
 		"AppVersion":        common.VersionDef,
 		"DateTime":          timestamp.Format(time.UnixDate),
@@ -170,6 +171,7 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 		"SlaveList":         slaveList,
 		"RplUser":           sandboxDef.RplUser,
 		"RplPassword":       sandboxDef.RplPassword,
+		"DbUser":            sandboxDef.DbUser,
 		"DbPassword":        sandboxDef.DbPassword,
 		"SlaveLabel":        slaveLabel,
 		"SlaveAbbr":         slaveAbbr,
@@ -401,6 +403,12 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 			{globals.ScriptCheckNodesCluster, globals.TmplCheckClusterNodes, true},
 			{globals.ScriptWipeRestartAll, globals.TmplWipeAndRestartAllCluster, true},
 			{globals.ScriptStartAll, globals.TmplStartAllCluster, true},
+			{globals.ScriptStartMysqlRouter, globals.TmplStartMysqlRouter, true},
+			{globals.ScriptStopMysqlRouter, globals.TmplStopMysqlRouter, true},
+			{globals.ScriptStatusMysqlRouter, globals.TmplStatusMysqlRouter, true},
+			{globals.ScriptMysqlRouterConnections, globals.TmplMysqlRouterConnections, true},
+			{globals.ScriptRouterWriter, globals.TmplRouterWriter, true},
+			{globals.ScriptRouterReader, globals.TmplRouterReader, true},
 		},
 	}
 
@@ -429,7 +437,6 @@ func CreateInnoDBClusterReplication(sandboxDef SandboxDef, origin string, nodes 
 			return fmt.Errorf("error initializing group replication: %s", err)
 		}
 	}
-	common.CondPrintf("Group Replication directory installed in %s\n", common.ReplaceLiteralHome(sandboxDef.SandboxDir))
 	common.CondPrintf("run 'dbdeployer usage multiple' for basic instructions'\n")
 	return nil
 }

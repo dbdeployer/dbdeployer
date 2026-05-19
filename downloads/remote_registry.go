@@ -598,7 +598,7 @@ func TarballFileInfoValidation(collection TarballCollection) error {
 			tarballErrorList = append(tarballErrorList, tarballError{tb.Name, "version is missing"})
 		}
 		// TODO: validate the checksum type and the corresponding checksum length
-		if tb.Checksum == "" && tb.Flavor != "tidb" {
+		if tb.Checksum == "" && tb.Flavor != "tidb" && tb.Flavor != common.MySQLRouterFlavor {
 			tarballErrorList = append(tarballErrorList, tarballError{tb.Name, "checksum is missing"})
 		}
 		if tb.OperatingSystem == "" {

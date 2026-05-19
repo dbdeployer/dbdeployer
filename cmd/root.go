@@ -86,7 +86,7 @@ func setPflag(cmd *cobra.Command, key string, abbr string, envVar string, defaul
 }
 
 func checkDefaultsFile() {
-	flags := rootCmd.Flags()
+	flags := rootCmd.PersistentFlags()
 	defaults.CustomConfigurationFile, _ = flags.GetString(globals.ConfigLabel)
 	if defaults.CustomConfigurationFile != defaults.ConfigurationFile {
 		if common.FileExists(defaults.CustomConfigurationFile) {
@@ -99,6 +99,7 @@ func checkDefaultsFile() {
 
 	shellPath, _ := flags.GetString(globals.ShellPathLabel)
 	mysqlshPath, _ := flags.GetString(globals.MysqlshPathLabel)
+	mysqlRouterPath, _ := flags.GetString(globals.MysqlRouterPathLabel)
 
 	shellPath, err := common.GetBashPath(shellPath)
 	if err != nil {
@@ -107,6 +108,7 @@ func checkDefaultsFile() {
 	if defaults.ValidateDefaults(defaults.Defaults()) {
 		defaults.UpdateDefaults(globals.ShellPathLabel, shellPath, false)
 		defaults.UpdateDefaults(globals.MysqlshPathLabel, mysqlshPath, false)
+		defaults.UpdateDefaults(globals.MysqlRouterPathLabel, mysqlRouterPath, false)
 	}
 	err = sandbox.FillMockTemplates()
 	if err != nil {
@@ -153,6 +155,11 @@ func init() {
 	setPflag(rootCmd, globals.SandboxBinaryLabel, "", "SANDBOX_BINARY", defaults.Defaults().SandboxBinary, "Binary repository", false)
 	setPflag(rootCmd, globals.ShellPathLabel, "", "SHELL_PATH", common.Which("bash"), "Path to Bash, used for generated scripts", false)
 	setPflag(rootCmd, globals.MysqlshPathLabel, "", "MYSQLSH_PATH", "mysqlsh", "Path to mysqlsh executable", false)
+	setPflag(rootCmd, globals.MysqlRouterPathLabel, "", "MYSQL_ROUTER_PATH", "", "Bootstrap MySQL Router for innodb-cluster/cluster-set. Omit for no router. Bare flag: try ...-router/<version>/bin/mysqlrouter then PATH. Or --mysql-router=/path", false)
+	mysqlRouterFlag := rootCmd.PersistentFlags().Lookup(globals.MysqlRouterPathLabel)
+	if mysqlRouterFlag != nil {
+		mysqlRouterFlag.NoOptDefVal = globals.MysqlRouterAutoResolveSentinel
+	}
 	rootCmd.PersistentFlags().BoolP(globals.SkipLibraryCheck, "", false, "Skip check for needed libraries (may cause nasty errors)")
 
 	rootCmd.InitDefaultVersionFlag()

@@ -690,7 +690,8 @@ func TestCreateSandbox(t *testing.T) {
 			t.Fatalf("error getting catalog list: %s", err)
 		}
 		if len(catalog) > 0 {
-			t.Fatalf("catalog (%s) not empty", defaults.SandboxRegistry)
+			t.Skipf("catalog (%s) not empty (%d entries): TestCreateSandbox needs empty catalog and sandbox home — clear ~/.dbdeployer/sandboxes.json or sandboxes dir first",
+				defaults.SandboxRegistry, len(catalog))
 		}
 	}
 	if common.DirExists(defaults.Defaults().SandboxHome) {
@@ -699,7 +700,8 @@ func TestCreateSandbox(t *testing.T) {
 			t.Fatalf("error getting sandboxes list: %s", err)
 		}
 		if len(installed) > 0 {
-			t.Fatalf("sandbox home (%s) not empty", defaults.Defaults().SandboxHome)
+			t.Skipf("sandbox home (%s) not empty (%d entries): remove sandboxes first or run tests with an isolated HOME",
+				defaults.Defaults().SandboxHome, len(installed))
 		}
 	}
 	t.Run("single", testCreateStandaloneSandbox)

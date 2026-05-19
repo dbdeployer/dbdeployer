@@ -111,7 +111,10 @@ const (
 	PromptValue               = "mysql"
 	SocketInDatadirLabel      = "socket-in-datadir"
 	PortAsServerIdLabel       = "port-as-server-id"
-	MysqlshPathLabel          = "mysqlsh-path"
+	MysqlshPathLabel     = "mysqlsh-path"
+	MysqlRouterPathLabel = "mysql-router"
+	// MysqlRouterAutoResolveSentinel is stored for bare `--mysql-router` (pflag NoOptDefVal).
+	MysqlRouterAutoResolveSentinel = "AUTO"
 
 	// Instantiated in cmd/single.go
 	MasterLabel    = "master"
@@ -177,8 +180,8 @@ const (
 	PxcLabel             = "pxc"
 	NdbLabel             = "ndb"
 	InnoDBClusterLabel   = "innodb-cluster"
-	ClusterSetLabel      = "clusterset"
-	ClusterSetNodesValue = 6 // default --nodes for --topology=clusterset (HA 3 + DR 3)
+	ClusterSetLabel      = "cluster-set"
+	ClusterSetNodesValue = 6 // default --nodes for --topology=cluster-set (HA 3 + DR 3)
 	ChangeMasterOptions  = "change-master-options"
 
 	// Instantiated in cmd/unpack.go and unpack/unpack.go
@@ -316,6 +319,12 @@ const (
 	ScriptWipeRestartAll            = "wipe_and_restart_all"
 	ScriptWipeRestartAllClusterSet  = "wipe_and_restart_all_clusterset"
 	ScriptMetadataAll               = "metadata_all"
+	ScriptStartMysqlRouter          = "start_mysql_router"
+	ScriptStopMysqlRouter           = "stop_mysql_router"
+	ScriptStatusMysqlRouter         = "status_mysql_router"
+	ScriptMysqlRouterConnections    = "mysqlrouter_connections"
+	ScriptRouterWriter              = "router_writer"
+	ScriptRouterReader              = "router_reader"
 
 	// These constants are kept for reference
 	// although they are not used directly in the code.
@@ -457,6 +466,7 @@ const (
 	FnLibPerconaServerClientSo    = "libperconaserverclient.so"
 	FnMysql                       = "mysql"
 	FnMysqlsh                     = "mysqlsh"
+	FnMysqlrouter                 = "mysqlrouter"
 	FnMysqlInstallDb              = "mysql_install_db"
 	FnMysqlProvisionZip           = "mysqlprovision.zip"
 	FnMysqld                      = "mysqld"

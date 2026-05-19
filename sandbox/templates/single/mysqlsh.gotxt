@@ -5,8 +5,8 @@ source {{.SandboxDir}}/sb_include
 export LD_LIBRARY_PATH=$CLIENT_LD_LIBRARY_PATH
 [ -z "$MYSQL_SHELL" ] && MYSQL_SHELL="{{.MysqlShell}}"
 
-if ! command -v "$MYSQL_SHELL" >/dev/null 2>&1; then
-    echo "MySQL Shell not found. Install it or set the flag --mysqlsh-path=/path/to/bin/mysql-shell"
+if [ ! -x "$MYSQL_SHELL" ] && ! command -v "$MYSQL_SHELL" >/dev/null 2>&1; then
+    echo "MySQL Shell not found at '$MYSQL_SHELL'. Install it or set --mysqlsh-path=/path/to/install-or/bin/mysqlsh" >&2
     exit 1
 fi
 
@@ -21,6 +21,6 @@ then
         $MYSQL_SHELL --uri="$URI"
     fi
 else
-    echo "# $0 pidfile not found"
+    echo "# $0: pidfile not found ($PIDFILE)" >&2
     exit 1
 fi

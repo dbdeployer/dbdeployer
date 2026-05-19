@@ -118,6 +118,7 @@ func identifyFlavour(basename string) (string, error) {
 		{`^mysql-(5.7|8\.[01234]|9\.[01234567])`, "mysql"},
 		{"^mysql-cluster-8", "ndb"},
 		{"^mysql-shell-", "shell"},
+		{"^mysql-router-", "mysql-router"},
 		{"^Percona-Server-", "percona"},
 	}
 

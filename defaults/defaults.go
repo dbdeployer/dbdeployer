@@ -36,6 +36,7 @@ type DbdeployerDefaults struct {
 	CookbookDirectory             string `json:"cookbook-directory"`
 	ShellPath                     string `json:"shell-path"`
 	MysqlshPath                   string `json:"mysqlsh-path"`
+	MysqlRouterPath               string `json:"mysql-router"`
 	MasterSlaveBasePort           int    `json:"master-slave-base-port"`
 	GroupReplicationBasePort      int    `json:"group-replication-base-port"`
 	GroupReplicationSpBasePort    int    `json:"group-replication-sp-base-port"`
@@ -107,6 +108,7 @@ var (
 		CookbookDirectory:             "recipes",
 		ShellPath:                     globals.ShellPathValue,
 		MysqlshPath:                   "mysqlsh",
+		MysqlRouterPath:               "",
 		MasterSlaveBasePort:           11000,
 		GroupReplicationBasePort:      12000,
 		GroupReplicationSpBasePort:    13000,
@@ -349,6 +351,8 @@ func UpdateDefaults(label, value string, storeDefaults bool) {
 		newDefaults.ShellPath = value
 	case "mysqlsh-path":
 		newDefaults.MysqlshPath = value
+	case "mysql-router":
+		newDefaults.MysqlRouterPath = value
 	case "master-slave-base-port":
 		newDefaults.MasterSlaveBasePort = common.Atoi(value)
 	case "group-replication-base-port":
@@ -486,6 +490,8 @@ func DefaultsToMap() common.StringMap {
 		"shell-path":                        currentDefaults.ShellPath,
 		"MysqlshPath":                       currentDefaults.MysqlshPath,
 		"mysqlsh-path":                      currentDefaults.MysqlshPath,
+		"MysqlRouterPath":                   currentDefaults.MysqlRouterPath,
+		"mysql-router":                      currentDefaults.MysqlRouterPath,
 		"CookbookDirectory":                 currentDefaults.CookbookDirectory,
 		"cookbook-directory":                currentDefaults.CookbookDirectory,
 		"MasterSlaveBasePort":               currentDefaults.MasterSlaveBasePort,

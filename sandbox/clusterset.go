@@ -143,7 +143,8 @@ func CreateClusterSetReplication(sandboxDef SandboxDef, origin string, nodes int
 	}
 	var data = common.StringMap{
 		"ShellPath":         sandboxDef.ShellPath,
-		"MysqlshPath":       sandboxDef.MysqlshPath,
+		"MysqlshPath":       sandboxDef.MysqlshExe,
+		"MysqlRouterExe":    sandboxDef.MysqlRouterExe,
 		"Copyright":         globals.ShellScriptCopyright,
 		"AppVersion":        common.VersionDef,
 		"DateTime":          timestamp.Format(time.UnixDate),
@@ -154,6 +155,7 @@ func CreateClusterSetReplication(sandboxDef SandboxDef, origin string, nodes int
 		"SlaveList":         slaveList,
 		"RplUser":           sandboxDef.RplUser,
 		"RplPassword":       sandboxDef.RplPassword,
+		"DbUser":            sandboxDef.DbUser,
 		"DbPassword":        sandboxDef.DbPassword,
 		"SlaveLabel":        slaveLabel,
 		"SlaveAbbr":         slaveAbbr,
@@ -382,6 +384,12 @@ func CreateClusterSetReplication(sandboxDef SandboxDef, origin string, nodes int
 			{globals.ScriptCheckNodesClusterSet, globals.TmplCheckClusterSetNodes, true},
 			{globals.ScriptWipeRestartAllClusterSet, globals.TmplWipeAndRestartAllClusterSet, true},
 			{globals.ScriptStartAll, globals.TmplStartAllClusterSet, true},
+			{globals.ScriptStartMysqlRouter, globals.TmplStartMysqlRouter, true},
+			{globals.ScriptStopMysqlRouter, globals.TmplStopMysqlRouter, true},
+			{globals.ScriptStatusMysqlRouter, globals.TmplStatusMysqlRouter, true},
+			{globals.ScriptMysqlRouterConnections, globals.TmplMysqlRouterConnections, true},
+			{globals.ScriptRouterWriter, globals.TmplRouterWriter, true},
+			{globals.ScriptRouterReader, globals.TmplRouterReader, true},
 		},
 	}
 
@@ -410,7 +418,6 @@ func CreateClusterSetReplication(sandboxDef SandboxDef, origin string, nodes int
 			return fmt.Errorf("error initializing InnoDB ClusterSet: %s", err)
 		}
 	}
-	common.CondPrintf("InnoDB ClusterSet directory installed in %s\n", common.ReplaceLiteralHome(sandboxDef.SandboxDir))
 	common.CondPrintf("run 'dbdeployer usage multiple' for basic instructions'\n")
 	return nil
 }

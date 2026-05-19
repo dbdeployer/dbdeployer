@@ -17,6 +17,7 @@ package common
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/md5"  // #nosec G501 need to compute legacy checksums
 	"crypto/sha1" // #nosec G505 need to compute legacy checksums
 	"crypto/sha256"
@@ -524,37 +525,22 @@ func runCmdCtrlArgsSimple(c string, silent bool, args ...string) (string, error)
 }
 
 func runCmdCtrlArgs(c string, silent bool, args ...string) (string, string, error) {
+	var outBuf, errBuf bytes.Buffer
 	cmd := exec.Command(c, args...) // #nosec G204
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return "", "", err
-	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return "", "", err
-	}
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
+	err := cmd.Run()
 
-	err = cmd.Start()
-	if err != nil {
-		return "", "", err
-	}
-
-	slurpErr, _ := io.ReadAll(stderr)
-	slurpOut, _ := io.ReadAll(stdout)
-	err = cmd.Wait()
-
+	stdout, stderr := outBuf.String(), errBuf.String()
 	if err != nil {
 		CondPrintf("cmd:    %s\n", c)
 		CondPrintf("err:    %s\n", err)
-		CondPrintf("stdout: %s\n", slurpOut)
-		CondPrintf("stderr: %s\n", slurpErr)
-	} else {
-		if !silent {
-			fmt.Printf("%s", slurpOut)
-		}
+		CondPrintf("stdout: %s\n", stdout)
+		CondPrintf("stderr: %s\n", stderr)
+	} else if !silent {
+		fmt.Print(stdout)
 	}
-
-	return string(slurpOut), string(slurpErr), err
+	return stdout, stderr, err
 }
 
 // Runs a command, with optional quiet output

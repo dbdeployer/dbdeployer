@@ -188,4 +188,10 @@ const (
 	TmplCheckClusterSetNodes        = "check_nodes_clusterset"
 	TmplWipeAndRestartAllClusterSet = "wipe_and_restart_all_clusterset"
 	TmplStartAllClusterSet          = "start_all_clusterset"
+	TmplStartMysqlRouter            = "start_mysql_router"
+	TmplStopMysqlRouter             = "stop_mysql_router"
+	TmplStatusMysqlRouter           = "status_mysql_router"
+	TmplMysqlRouterConnections      = "mysqlrouter_connections"
+	TmplRouterWriter                = "router_writer"
+	TmplRouterReader                = "router_reader"
 )

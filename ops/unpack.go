@@ -1,5 +1,6 @@
 // DBDeployer - The MySQL Sandbox
 // Copyright © 2006-2022 Giuseppe Maxia
+// Copyright © 2025-2026 Roberto Garcia de Bem
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,7 +55,6 @@ func UnpackTarball(options UnpackOptions) error {
 	if verList != nil {
 		detectedVersion = verList[0][0]
 	}
-	// common.CondPrintf(">> %#v %s\n",verList, detected_version)
 
 	isShell := options.IsShell
 	target := options.TargetServer
@@ -72,6 +72,9 @@ func UnpackTarball(options UnpackOptions) error {
 			return fmt.Errorf("no flavor detected in %s. Please use --%s", tarball, globals.FlavorLabel)
 		}
 	}
+	isMysqlRouter := flavor == common.MySQLRouterFlavor
+	routerUnpackRoot := common.SandboxRouterBinaryRoot(Basedir)
+
 	Version := options.Version
 	if Version == "" {
 		Version = detectedVersion
@@ -80,7 +83,6 @@ func UnpackTarball(options UnpackOptions) error {
 		return fmt.Errorf("unpack: No version was detected from tarball name. " +
 			"Flag --unpack-version becomes mandatory")
 	}
-	// This call used to ensure that the port provided is in the right format
 	_, err := common.VersionToPort(Version)
 	if err != nil {
 		return fmt.Errorf("version %s not in the required format", Version)
@@ -98,16 +100,21 @@ func UnpackTarball(options UnpackOptions) error {
 		}
 	}
 
+	unpackInto := Basedir
 	destination := path.Join(Basedir, Prefix+Version)
 	if target != "" {
 		destination = path.Join(Basedir, target)
 	}
+	if isMysqlRouter {
+		unpackInto = routerUnpackRoot
+		destination = path.Join(routerUnpackRoot, Prefix+Version)
+	}
 	if common.DirExists(destination) && !isShell {
 		if overwrite {
 			if dryRun {
-				fmt.Printf("delete binaries %s %s\n", Basedir, Prefix+Version)
+				fmt.Printf("delete binaries %s %s%s\n", unpackInto, Prefix, Version)
 			} else {
-				isDeleted, err := DeleteBinaries(Basedir, Prefix+Version, false)
+				isDeleted, err := DeleteBinaries(unpackInto, Prefix+Version, false)
 				if !isDeleted {
 					return fmt.Errorf("directory %s could not be removed", Prefix+Version)
 				}
@@ -120,7 +127,6 @@ func UnpackTarball(options UnpackOptions) error {
 		}
 	}
 	extracted := path.Base(tarball)
-	var bareName string
 
 	var extractFunc func(string, string, int) error
 	var foundExtension string
@@ -139,7 +145,8 @@ func UnpackTarball(options UnpackOptions) error {
 	if err != nil {
 		return fmt.Errorf("validation for %s failed: %s", tarball, err)
 	}
-	bareName = extracted[0 : len(extracted)-len(globals.TarGzExt)]
+	bareName := extracted[0 : len(extracted)-len(foundExtension)]
+
 	if isShell {
 		common.CondPrintf("Merging shell tarball %s to %s\n", common.ReplaceLiteralHome(tarball), common.ReplaceLiteralHome(destination))
 		if !dryRun {
@@ -151,18 +158,26 @@ func UnpackTarball(options UnpackOptions) error {
 		return nil
 	}
 
+	if isMysqlRouter {
+		common.CondPrintf("MySQL Router install root %s\n", common.ReplaceLiteralHome(routerUnpackRoot))
+		if !dryRun {
+			err = os.MkdirAll(routerUnpackRoot, globals.PublicDirectoryAttr)
+			if err != nil {
+				return fmt.Errorf("creating router directory %s: %w", routerUnpackRoot, err)
+			}
+		}
+	}
+
 	common.CondPrintf("Unpacking tarball %s to %s\n", tarball, common.ReplaceLiteralHome(destination))
 	if dryRun {
 		return nil
 	}
 
-	err = extractFunc(tarball, Basedir, verbosity)
+	err = extractFunc(tarball, unpackInto, verbosity)
 	if err != nil {
 		return err
 	}
-	finalName := path.Join(Basedir, bareName)
-	// If the directory was not created, it probably means that the tarball was not well organised
-	// and either lacked the top directory or the top directory had a different name
+	finalName := path.Join(unpackInto, bareName)
 	if !common.DirExists(finalName) {
 		return fmt.Errorf("problem with tarball %s: directory %s was not created", tarball, finalName)
 	}

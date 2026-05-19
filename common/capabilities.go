@@ -48,6 +48,7 @@ const (
 	// Tarball flavors
 	MySQLFlavor         = "mysql"
 	MySQLShellFlavor    = "mysql-shell"
+	MySQLRouterFlavor   = "mysql-router"
 	PerconaServerFlavor = "percona"
 	MariaDbFlavor       = "mariadb"
 	NdbFlavor           = "ndb"

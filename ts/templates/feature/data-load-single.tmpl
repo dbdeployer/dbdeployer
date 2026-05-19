@@ -35,11 +35,12 @@ stdout '# fail  :     0'
 # load data list
 
 exec dbdeployer data-load list
-stdout 'employees\s+36 MB employee data'
-stdout 'menagerie\s+2.0 kB menagerie database'
-stdout 'world\s+93 kB world database'
-stdout 'worldx\s+99 kB world_X database'
-stdout 'sakila\s+732 kB Sakila database'
+# Sizes come from humanize.Bytes(); wording changes with dependency/version (e.g. 34 MB vs 36 MB).
+stdout 'employees\s+\S+\s+employee data'
+stdout 'menagerie\s+\S+\s+menagerie database'
+stdout 'world\s+\S+\s+world database'
+stdout 'worldx\s+\S+\s+world_X database'
+stdout 'sakila\s+\S+\s+Sakila database'
 
 # load data world
 

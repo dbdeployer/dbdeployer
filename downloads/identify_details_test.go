@@ -48,6 +48,8 @@ func TestIdentify(t *testing.T) {
 		{"mysql-cluster-8.0.33-macos13-x86_64.tar.gz", "ndb", "8.0.33", "8.0", "x86_64", "Darwin", false},
 		{"mysql-cluster-8.0.33-linux-glibc2.12-x86_64.tar.xz", "ndb", "8.0.33", "8.0", "x86_64", "linux", false},
 		{"mysql-8.0.33-linux-glibc2.17-x86_64-minimal.tar.xz", "mysql", "8.0.33", "8.0", "x86_64", "linux", true},
+		{"mysql-router-8.0.27-linux-glibc2.12-x86_64.tar.xz", "mysql-router", "8.0.27", "8.0", "x86_64", "linux", false},
+		{"mysql-router-8.4.7-linux-glibc2.28-x86_64.tar.xz", "mysql-router", "8.4.7", "8.4", "x86_64", "linux", false},
 		{"mysql-8.0.33-linux-glibc2.17-aarch64-minimal.tar.xz", "mysql", "8.0.33", "8.0", "aarch64", "linux", true},
 		{"mysql-8.0.33-linux-glibc2.28-aarch64.tar.gz", "mysql", "8.0.33", "8.0", "aarch64", "linux", false},
 		{"mysql-8.0.33-linux-glibc2.28-x86_64.tar.gz", "mysql", "8.0.33", "8.0", "x86_64", "linux", false},
