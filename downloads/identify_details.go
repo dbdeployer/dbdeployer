@@ -115,10 +115,11 @@ func identifyFlavour(basename string) (string, error) {
 		pattern string
 		flavour string
 	}{
+		{"^mysql-router-", "mysql-router"},
+		{"^villagesql-server-", "villagesql"},
 		{`^mysql-(5.7|8\.[01234]|9\.[01234567])`, "mysql"},
 		{"^mysql-cluster-8", "ndb"},
 		{"^mysql-shell-", "shell"},
-		{"^mysql-router-", "mysql-router"},
 		{"^Percona-Server-", "percona"},
 	}
 
@@ -147,6 +148,14 @@ func identifyArchitecture(basename string) (string, error) {
 
 // identifyVersion returns the version and shortVersion based on the basename
 func identifyVersion(basename string) (version string, shortVersion string, err error) {
+	reVillageSQL := regexp.MustCompile(`^villagesql-server-(\d+\.\d+\.\d+)`)
+	if m := reVillageSQL.FindStringSubmatch(basename); len(m) >= 2 {
+		version = m[1]
+		index := strings.LastIndex(version, ".")
+		shortVersion = version[:index]
+		return version, shortVersion, nil
+	}
+
 	pattern := `(5\.7\.\d+|8\.[01234]\.\d+|9\.\d+\.\d+|10\.\d+\.\d+)`
 
 	r := regexp.MustCompile(pattern)

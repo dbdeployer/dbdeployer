@@ -336,6 +336,13 @@ func fillSandboxDefinition(cmd *cobra.Command, args []string, usingImport bool) 
 	sd.Flavor, _ = flags.GetString(globals.FlavorLabel)
 
 	sd.Flavor = getFlavor(sd.Flavor, sd.Basedir)
+	if sd.Flavor == common.VillageSQLFlavor && !versionFromOption {
+		upstream, err := common.ResolveVillageSQLUpstreamVersion(sd.Basedir)
+		common.ErrCheckExitf(err, 1, "VillageSQL upstream version: %s", err)
+		sd.Version = upstream
+		sd.Port, err = common.VersionToPort(sd.Version)
+		common.ErrCheckExitf(err, 1, "port from %s: %s", sd.Version, err)
+	}
 	checkForRootValue(sd.DbUser, globals.DbUserLabel, globals.DbUserValue)
 	checkForRootValue(sd.RplUser, globals.RplUserLabel, globals.RplUserValue)
 

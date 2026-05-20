@@ -72,11 +72,12 @@ stdout -count=2 '^[0-9]+$'
 # load data list
 
 exec dbdeployer data-load list
-stdout 'employees\s+\S+\s+employee data'
-stdout 'menagerie\s+\S+\s+menagerie database'
-stdout 'world\s+\S+\s+world database'
-stdout 'worldx\s+\S+\s+world_X database'
-stdout 'sakila\s+\S+\s+Sakila database'
+# Sizes come from humanize.Bytes(); allow optional unit token (e.g. "36 MB", "2.0 kB").
+stdout 'employees\s+\S+(?:\s+\S+)?\s+employee data'
+stdout 'menagerie\s+\S+(?:\s+\S+)?\s+menagerie database'
+stdout 'world\s+\S+(?:\s+\S+)?\s+world database'
+stdout 'worldx\s+\S+(?:\s+\S+)?\s+world_X database'
+stdout 'sakila\s+\S+(?:\s+\S+)?\s+Sakila database'
 
 # load data world
 

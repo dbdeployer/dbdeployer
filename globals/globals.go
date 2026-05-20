@@ -111,8 +111,8 @@ const (
 	PromptValue               = "mysql"
 	SocketInDatadirLabel      = "socket-in-datadir"
 	PortAsServerIdLabel       = "port-as-server-id"
-	MysqlshPathLabel     = "mysqlsh-path"
-	MysqlRouterPathLabel = "mysql-router"
+	MysqlshPathLabel          = "mysqlsh-path"
+	MysqlRouterPathLabel      = "mysql-router"
 	// MysqlRouterAutoResolveSentinel is stored for bare `--mysql-router` (pflag NoOptDefVal).
 	MysqlRouterAutoResolveSentinel = "AUTO"
 
@@ -470,6 +470,7 @@ const (
 	FnMysqlInstallDb              = "mysql_install_db"
 	FnMysqlProvisionZip           = "mysqlprovision.zip"
 	FnMysqld                      = "mysqld"
+	FnVillageSQLSchema            = "villagesql_schema.sql"
 	FnMysqldDebug                 = "mysqld-debug"
 	FnMysqldSafe                  = "mysqld_safe"
 	FnNdbd                        = "ndbd"

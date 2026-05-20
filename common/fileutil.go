@@ -430,14 +430,22 @@ func CheckLibraries(basedir string) error {
 		// We skip empty lines
 		reEmpty := regexp.MustCompile(`^\s*$`)
 
+		// ldd may emit version-mismatch warnings that aren't missing libs, e.g.
+		//   /path/to/mysql: /lib64/libtinfo.so.6: no version information available (required by /path/to/mysql)
+		// or banner lines such as "/path/to/mysql:" at the top of recursive output.
+		reLddNoise := regexp.MustCompile(`no version information available|^\s*\S+:\s*$`)
+
+		isMissing := func(lib string) bool {
+			return !reEmpty.MatchString(lib) && !reLibPath.MatchString(lib) &&
+				!reLibInternal.MatchString(lib) && !reLddNoise.MatchString(lib)
+		}
 		for _, lib := range strings.Split(mysqlLibs, "\n") {
-			// If none of the known pattern apply, it's a not-found library
-			if !reEmpty.MatchString(lib) && !reLibPath.MatchString(lib) && !reLibInternal.MatchString(lib) {
+			if isMissing(lib) {
 				missingMysql = append(missingMysql, lib)
 			}
 		}
 		for _, lib := range strings.Split(mysqldLibs, "\n") {
-			if !reEmpty.MatchString(lib) && !reLibPath.MatchString(lib) && !reLibInternal.MatchString(lib) {
+			if isMissing(lib) {
 				missingMysqld = append(missingMysqld, lib)
 			}
 		}

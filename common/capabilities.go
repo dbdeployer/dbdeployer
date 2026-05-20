@@ -54,6 +54,7 @@ const (
 	NdbFlavor           = "ndb"
 	PxcFlavor           = "pxc"
 	TiDbFlavor          = "tidb"
+	VillageSQLFlavor    = "villagesql"
 
 	// Feature names
 	InstallDb                   = "installdb"
@@ -277,6 +278,13 @@ var FlavorCompositionList = []flavorIndicator{
 	{
 		AllNeeded: false,
 		elements: []elementPath{
+			{"share", globals.FnVillageSQLSchema},
+		},
+		flavor: VillageSQLFlavor,
+	},
+	{
+		AllNeeded: false,
+		elements: []elementPath{
 			{"bin", globals.FnMysqld},
 			{"bin", globals.FnMysqldDebug},
 			{"lib", globals.FnLibMySQLClientA},
@@ -296,6 +304,12 @@ var FlavorCompositionList = []flavorIndicator{
 var PerconaCapabilities = Capabilities{
 	Flavor:      PerconaServerFlavor,
 	Description: "Percona Server",
+	Features:    MySQLCapabilities.Features,
+}
+
+var VillageSQLCapabilities = Capabilities{
+	Flavor:      VillageSQLFlavor,
+	Description: "VillageSQL",
 	Features:    MySQLCapabilities.Features,
 }
 
@@ -399,6 +413,7 @@ var AllCapabilities = map[string]Capabilities{
 	NdbFlavor:           NdbCapabilities,
 	PxcFlavor:           PxcCapabilities,
 	MySQLShellFlavor:    MySQLShellCapabilities,
+	VillageSQLFlavor:    VillageSQLCapabilities,
 }
 
 // Returns a set of existing capabilities with custom ones

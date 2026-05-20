@@ -895,6 +895,7 @@ func DetectTarballFlavor(tarballName string) string {
 		PxcFlavor:           `Percona-XtraDB-Cluster`,
 		MySQLShellFlavor:    `mysql-shell`,
 		MySQLRouterFlavor:   `mysql-router`,
+		VillageSQLFlavor:    `villagesql-server`,
 		MySQLFlavor:         `mysql`,
 	}
 
@@ -908,6 +909,7 @@ func DetectTarballFlavor(tarballName string) string {
 		PxcFlavor,
 		MySQLShellFlavor,
 		MySQLRouterFlavor,
+		VillageSQLFlavor,
 		MySQLFlavor,
 	}
 
