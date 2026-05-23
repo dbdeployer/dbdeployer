@@ -1,3 +1,11 @@
+## 1.76.0	22-May-2026
+
+## NEW FEATURES
+
+* Add support for MySQL router --mysql-router
+* Add support for MySQL Cluster Set
+* Add support for VillageDB
+
 ## 1.75.2	04-Mar-2026
 
 ## ADJUSTMENTS

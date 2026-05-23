@@ -2,7 +2,7 @@
 [DBdeployer](https://github.com/dbdeployer/dbdeployer) is a tool that deploys MySQL database servers easily.
 This is a port of [MySQL-Sandbox](https://github.com/datacharmer/mysql-sandbox), originally written in Perl, and re-designed from the ground up in [Go](https://golang.org). See the [features comparison](https://github.com/dbdeployer/dbdeployer/blob/master/docs/features.md) for more detail.
 
-Documentation updated for version 1.75.2 (10-Mar-2026 21:36 UTC)
+Documentation updated for version 1.76.0 (22-May-2026 12:21 UTC)
 
 ![Build Status](https://github.com/dbdeployer/dbdeployer/workflows/.github/workflows/all_tests.yml/badge.svg)
 
@@ -80,7 +80,7 @@ Get the one for your O.S. from [dbdeployer releases](https://github.com/dbdeploy
 
 For example:
 
-    $ VERSION=1.75.2
+    $ VERSION=1.76.0
     $ OS=linux
     $ origin=https://github.com/dbdeployer/dbdeployer/releases/download/v$VERSION
     $ wget $origin/dbdeployer-$VERSION.$OS.tar.gz
@@ -150,7 +150,22 @@ This command creates the necessary directories, then downloads the latest MySQL 
 Running the command without options is what most users need. Advanced ones may look at the documentation to fine tune the initialization.
 
     $ dbdeployer init -h
-    # ERROR running dbdeployer init -h: exec: "dbdeployer": executable file not found in $PATH
+    Initializes dbdeployer environment: 
+    * creates $SANDBOX_HOME and $SANDBOX_BINARY directories
+    * downloads and expands the latest MySQL tarball
+    * installs shell completion file
+    
+    Usage:
+      dbdeployer init [flags]
+    
+    Flags:
+          --dry-run                 Show operations but don't run them
+      -h, --help                    help for init
+          --skip-all-downloads      Do not download any file (skip both MySQL tarball and shell completion file)
+          --skip-shell-completion   Do not download shell completion file
+          --skip-tarball-download   Do not download MySQL tarball
+    
+    
 
 
 # Updating dbdeployer
@@ -167,7 +182,37 @@ This command will download the latest release of dbdeployer from GitHub, and, if
 You can get more information during the operation by using the `--verbose` option. Other options are available for advanced users.
 
     $ dbdeployer update -h
-    # ERROR running dbdeployer update -h: exec: "dbdeployer": executable file not found in $PATH
+    Updates dbdeployer in place using the latest version (or one of your choice)
+    
+    Usage:
+      dbdeployer update [version] [flags]
+    
+    Examples:
+    
+    $ dbdeployer update
+    # gets the latest release, overwrites current dbdeployer binaries 
+    
+    $ dbdeployer update --dry-run
+    # shows what it will do, but does not do it
+    
+    $ dbdeployer update --new-path=$PWD
+    # downloads the latest executable into the current directory
+    
+    $ dbdeployer update v1.34.0 --force-old-version
+    # downloads dbdeployer 1.34.0 and replace the current one
+    # (WARNING: a version older than 1.36.0 won't support updating)
+    
+    
+    Flags:
+          --OS string           Gets the executable for this Operating system
+          --docs                Gets the docs version of the executable
+          --dry-run             Show what would happen, but don't execute it
+          --force-old-version   Force download of older version
+      -h, --help                help for update
+          --new-path string     Download updated dbdeployer into a different path
+          --verbose             Gives more info
+    
+    
 
 
 You can also see the details of a release using `dbdeployer info releases latest`.
@@ -200,10 +245,51 @@ For example:
 The program doesn't have any dependencies. Everything is included in the binary. Calling *dbdeployer* without arguments or with `--help` will show the main help screen.
 
     $ dbdeployer --version
-    # ERROR running dbdeployer --version: exec: "dbdeployer": executable file not found in $PATH
+    dbdeployer version 1.75.2
+    
 
     $ dbdeployer -h
-    # ERROR running dbdeployer -h: exec: "dbdeployer": executable file not found in $PATH
+    dbdeployer makes MySQL server installation an easy task.
+    Runs single, multiple, and replicated sandboxes.
+    
+    Usage:
+      dbdeployer [command]
+    
+    Available Commands:
+      admin           sandbox management tasks
+      cookbook        Shows dbdeployer samples
+      data-load       tasks related to dbdeployer data loading
+      defaults        tasks related to dbdeployer defaults
+      delete          delete an installed sandbox
+      delete-binaries delete an expanded tarball
+      deploy          deploy sandboxes
+      downloads       Manages remote tarballs
+      export          Exports the command structure in JSON format
+      global          Runs a given command in every sandbox
+      help            Help about any command
+      import          imports one or more MySQL servers into a sandbox
+      info            Shows information about dbdeployer environment samples
+      init            initializes dbdeployer environment
+      sandboxes       List installed sandboxes
+      unpack          unpack a tarball into the binary directory
+      update          Gets dbdeployer newest version
+      usage           Shows usage of installed sandboxes
+      use             uses a sandbox
+      versions        List available versions
+    
+    Flags:
+          --config string                  configuration file (default "$HOME/.dbdeployer/config.json")
+      -h, --help                           help for dbdeployer
+          --mysql-router string[="AUTO"]   Bootstrap MySQL Router for innodb-cluster/cluster-set. Omit for no router. Bare flag: try ...-router/<version>/bin/mysqlrouter then PATH. Or --mysql-router=/path
+          --mysqlsh-path string            Path to mysqlsh executable (default "mysqlsh")
+          --sandbox-binary string          Binary repository (default "$HOME/opt/mysql")
+          --sandbox-home string            Sandbox deployment directory (default "$HOME/sandboxes")
+          --shell-path string              Path to Bash, used for generated scripts (default "/usr/bin/bash")
+          --skip-library-check             Skip check for needed libraries (may cause nasty errors)
+      -v, --version                        version for dbdeployer
+    
+    Use "dbdeployer [command] --help" for more information about a command.
+    
 
 The flags listed in the main screen can be used with any commands.
 The flags `--my-cnf-options` and `--init-options` can be used several times.
@@ -213,31 +299,217 @@ The flags `--my-cnf-options` and `--init-options` can be used several times.
 If you don't have any tarballs installed in your system, you should first `unpack` it (see an example above).
 
     $ dbdeployer unpack -h
-    # ERROR running dbdeployer unpack -h: exec: "dbdeployer": executable file not found in $PATH
+    If you want to create a sandbox from a tarball (.tar.gz or .tar.xz), you first need to unpack it
+    into the sandbox-binary directory. This command carries out that task, so that afterwards 
+    you can call 'deploy single', 'deploy multiple', and 'deploy replication' commands with only 
+    the MySQL version for that tarball.
+    If the version is not contained in the tarball name, it should be supplied using --unpack-version.
+    If there is already an expanded tarball with the same version, a new one can be differentiated with --prefix.
+    
+    Usage:
+      dbdeployer unpack MySQL-tarball [flags]
+    
+    Aliases:
+      unpack, extract, untar, unzip, inflate, expand
+    
+    Examples:
+    
+        $ dbdeployer unpack mysql-8.0.4-rc-linux-glibc2.12-x86_64.tar.gz
+        Unpacking tarball mysql-8.0.4-rc-linux-glibc2.12-x86_64.tar.gz to $HOME/opt/mysql/8.0.4
+    
+        $ dbdeployer unpack --prefix=ps Percona-Server-5.7.21-linux.tar.gz
+        Unpacking tarball Percona-Server-5.7.21-linux.tar.gz to $HOME/opt/mysql/ps5.7.21
+    
+        $ dbdeployer unpack --unpack-version=8.0.18 --prefix=bld mysql-mybuild.tar.gz
+        Unpacking tarball mysql-mybuild.tar.gz to $HOME/opt/mysql/bld8.0.18
+    	
+    
+    Flags:
+          --dry-run                 Show unpack operations, but do not run them
+          --flavor string           Defines the tarball flavor (MySQL, NDB, Percona Server, etc)
+      -h, --help                    help for unpack
+          --overwrite               Overwrite the destination directory if already exists
+          --prefix string           Prefix for the final expanded directory
+          --shell                   Unpack a shell tarball into the corresponding server directory
+          --target-server string    Uses a different server to unpack a shell tarball
+          --unpack-version string   which version is contained in the tarball
+          --verbosity int           Level of verbosity during unpack (0=none, 2=maximum) (default 1)
+    
+    
 
 ## Deploy single
 
 The easiest command is `deploy single`, which installs a single sandbox.
 
     $ dbdeployer deploy -h
-    # ERROR running dbdeployer deploy -h: exec: "dbdeployer": executable file not found in $PATH
+    Deploys single, multiple, or replicated sandboxes
+    
+    Usage:
+      dbdeployer deploy [command]
+    
+    Available Commands:
+      multiple    create multiple sandbox
+      replication create replication sandbox
+      single      deploys a single sandbox
+    
+    Flags:
+          --base-port int                   Overrides default base-port (for multiple sandboxes)
+          --base-server-id int              Overrides default server_id (for multiple sandboxes)
+          --binary-version string           Specifies the version when the basedir directory name does not contain it (i.e. it is not x.x.xx)
+          --bind-address string             defines the database bind-address  (default "127.0.0.1")
+          --client-from string              Where to get the client binaries from
+          --concurrent                      Runs multiple sandbox deployments concurrently
+          --custom-mysqld string            Uses an alternative mysqld (must be in the same directory as regular mysqld)
+          --custom-role-extra string        Extra instructions for custom role (8.0+) (default "WITH GRANT OPTION")
+          --custom-role-name string         Name for custom role (8.0+) (default "R_CUSTOM")
+          --custom-role-privileges string   Privileges for custom role (8.0+) (default "ALL PRIVILEGES")
+          --custom-role-target string       Target for custom role (8.0+) (default "*.*")
+      -p, --db-password string              database password (default "msandbox")
+      -u, --db-user string                  database user (default "msandbox")
+          --default-role string             Which role to assign to default user (8.0+) (default "R_DO_IT_ALL")
+          --defaults stringArray            Change defaults on-the-fly (--defaults=label:value)
+          --disable-mysqlx                  Disable MySQLX plugin (8.0.11+)
+          --enable-admin-address            Enables admin address (8.0.14+)
+          --enable-general-log              Enables general log for the sandbox (MySQL 5.1+)
+          --enable-mysqlx                   Enables MySQLX plugin (5.7.12+)
+          --expose-dd-tables                In MySQL 8.0+ shows data dictionary tables
+          --flavor string                   Defines the tarball flavor (MySQL, NDB, Percona Server, etc)
+          --flavor-in-prompt                Add flavor values to prompt
+          --force                           If a destination sandbox already exists, it will be overwritten
+          --gtid                            enables GTID
+      -h, --help                            help for deploy
+          --history-dir string              Where to store mysql client history (default: in sandbox directory)
+          --init-general-log                uses general log during initialization (MySQL 5.1+)
+      -i, --init-options stringArray        mysqld options to run during initialization
+          --keep-server-uuid                Does not change the server UUID
+          --log-directory string            Where to store dbdeployer logs (default "$HOME/sandboxes/logs")
+          --log-sb-operations               Logs sandbox operations to a file
+          --my-cnf-file string              Alternative source file for my.sandbox.cnf
+      -c, --my-cnf-options stringArray      mysqld options to add to my.sandbox.cnf
+          --native-auth-plugin              in 8.0.4+, uses the native password auth plugin
+          --port int                        Overrides default port
+          --port-as-server-id               Use the port number as server ID
+          --post-grants-sql stringArray     SQL queries to run after loading grants
+          --post-grants-sql-file string     SQL file to run after loading grants
+          --pre-grants-sql stringArray      SQL queries to run before loading grants
+          --pre-grants-sql-file string      SQL file to run before loading grants
+          --remote-access string            defines the database access  (default "127.%")
+          --repl-crash-safe                 enables Replication crash safe
+          --rpl-password string             replication password (default "rsandbox")
+          --rpl-user string                 replication user (default "rsandbox")
+          --sandbox-directory string        Changes the default name of the sandbox directory
+          --skip-load-grants                Does not load the grants
+          --skip-report-host                Does not include report host in my.sandbox.cnf
+          --skip-report-port                Does not include report port in my.sandbox.cnf
+          --skip-start                      Does not start the database server
+          --socket-in-datadir               Create socket in datadir instead of $TMPDIR
+          --task-user string                Task user to be created (8.0+)
+          --task-user-role string           Role to be assigned to task user (8.0+)
+          --use-template stringArray        [template_name:file_name] Replace existing template with one from file
+    
+    
 
     $ dbdeployer deploy single -h
-    # ERROR running dbdeployer deploy single -h: exec: "dbdeployer": executable file not found in $PATH
+    single installs a sandbox and creates useful scripts for its use.
+    MySQL-Version is in the format x.x.xx, and it refers to a directory named after the version
+    containing an unpacked tarball. The place where these directories are found is defined by 
+    --sandbox-binary (default: $HOME/opt/mysql.)
+    For example:
+    	dbdeployer deploy single 5.7     # deploys the latest release of 5.7.x
+    	dbdeployer deploy single 5.7.21  # deploys a specific release
+    	dbdeployer deploy single /path/to/5.7.21  # deploys a specific release in a given path
+    
+    For this command to work, there must be a directory $HOME/opt/mysql/5.7.21, containing
+    the binary files from mysql-5.7.21-$YOUR_OS-x86_64.tar.gz
+    Use the "unpack" command to get the tarball into the right directory.
+    
+    Usage:
+      dbdeployer deploy single MySQL-Version [flags]
+    
+    Flags:
+      -h, --help            help for single
+          --master          Make the server replication ready
+          --prompt string   Default prompt for the single client (default "mysql")
+          --server-id int   Overwrite default server-id
+    
+    
 
 ## Deploy multiple
 
 If you want more than one sandbox of the same version, without any replication relationship, use the `deploy multiple` command with an optional `--nodes` flag (default: 3).
 
     $ dbdeployer deploy multiple -h
-    # ERROR running dbdeployer deploy multiple -h: exec: "dbdeployer": executable file not found in $PATH
+    Creates several sandboxes of the same version,
+    without any replication relationship.
+    For this command to work, there must be a directory $HOME/opt/mysql/5.7.21, containing
+    the binary files from mysql-5.7.21-$YOUR_OS-x86_64.tar.gz
+    Use the "unpack" command to get the tarball into the right directory.
+    
+    Usage:
+      dbdeployer deploy multiple MySQL-Version [flags]
+    
+    Examples:
+    
+    	$ dbdeployer deploy multiple 5.7.21
+    	
+    
+    Flags:
+      -h, --help        help for multiple
+      -n, --nodes int   How many nodes will be installed (default 3)
+    
+    
 
 ## Deploy replication
 
 The `deploy replication` command will install a master and two or more slaves, with replication started. You can change the topology to *group* and get three nodes in peer replication, or compose multi-source topologies with *all-masters* or *fan-in*.
 
     $ dbdeployer deploy replication -h
-    # ERROR running dbdeployer deploy replication -h: exec: "dbdeployer": executable file not found in $PATH
+    The replication command allows you to deploy several nodes in replication.
+    Allowed topologies are "master-slave" for all versions, and  "group", "innodb-cluster", "cluster-set", "all-masters", "fan-in"
+    for  5.7.17+ (InnoDB Cluster / ClusterSet require MySQL 8.0+; cluster-set requires 8.0.27+ and 6 nodes by default).
+    Topologies "pcx" and "ndb" are available for binaries of type Percona Xtradb Cluster and MySQL Cluster.
+    For this command to work, there must be a directory $HOME/opt/mysql/5.7.21, containing
+    the binary files from mysql-5.7.21-$YOUR_OS-x86_64.tar.gz
+    Use the "unpack" command to get the tarball into the right directory.
+    
+    Usage:
+      dbdeployer deploy replication MySQL-Version [flags]
+    
+    Examples:
+    
+    		$ dbdeployer deploy replication 5.7    # deploys highest revision for 5.7
+    		$ dbdeployer deploy replication 5.7.21 # deploys a specific revision
+    		$ dbdeployer deploy replication /path/to/5.7.21 # deploys a specific revision in a given path
+    		# (implies topology = master-slave)
+    
+    		$ dbdeployer deploy --topology=master-slave replication 5.7
+    		# (explicitly setting topology)
+    
+    		$ dbdeployer deploy --topology=group replication 5.7
+    		$ dbdeployer deploy --topology=group replication 8.0 --single-primary
+    		$ dbdeployer deploy --topology=all-masters replication 5.7
+    		$ dbdeployer deploy --topology=fan-in replication 5.7
+    		$ dbdeployer deploy --topology=pxc replication pxc5.7.25
+    		$ dbdeployer deploy --topology=ndb replication ndb8.0.14
+    		$ dbdeployer deploy --topology=cluster-set replication 8.0.27 --mysqlsh-path=$HOME/opt/mysql/8.0.27
+    	
+    
+    Flags:
+          --change-master-options stringArray   options to add to CHANGE MASTER TO
+      -h, --help                                help for replication
+          --master-ip string                    Which IP the slaves will connect to (default "127.0.0.1")
+          --master-list string                  Which nodes are masters in a multi-source deployment
+          --ndb-nodes int                       How many NDB nodes will be installed (default 3)
+      -n, --nodes int                           How many nodes will be installed (default 6 for cluster-set topology) (default 3)
+          --read-only-slaves                    Set read-only for slaves
+          --repl-history-dir                    uses the replication directory to store mysql client history
+          --semi-sync                           Use semi-synchronous plugin
+          --single-primary                      Using single primary for group replication
+          --slave-list string                   Which nodes are slaves in a multi-source deployment
+          --super-read-only-slaves              Set super-read-only for slaves
+      -t, --topology string                     Which topology will be installed (default "master-slave")
+    
+    
 
 As of version 1.21.0, you can use Percona Xtradb Cluster tarballs to deploy replication of type *pxc*. This deployment only works on Linux.
 
@@ -577,9 +849,51 @@ Size:          1.1 GB
 ```
 
     $ dbdeployer downloads get --help
-    # ERROR running dbdeployer downloads get --help: exec: "dbdeployer": executable file not found in $PATH
+    Downloads a remote tarball
+    
+    Usage:
+      dbdeployer downloads get tarball_name [options] [flags]
+    
+    Flags:
+          --delete-after-unpack      Delete the tarball after successful unpack
+          --dry-run                  Show unpack operations, but do not run them
+      -h, --help                     help for get
+          --overwrite                Overwrite the destination directory if already exists
+          --prefix string            Prefix for the final expanded directory
+          --progress-step int        Progress interval (default 10485760)
+          --quiet                    Do not show download progress
+          --retries-on-failure int   How many times retry a download if a failure occurs on first try
+          --shell                    Unpack a shell tarball into the corresponding server directory
+          --target-server string     Uses a different server to unpack a shell tarball
+          --unpack                   Unpack after downloading
+          --unpack-version string    which version is contained in the tarball
+          --verbosity int            Level of verbosity during unpack (0=none, 2=maximum) (default 1)
+    
+    
     $ dbdeployer downloads get-by-flavor --help
-    # ERROR running dbdeployer downloads get-by-flavor --help: exec: "dbdeployer": executable file not found in $PATH
+    Manages remote tarballs
+    
+    Usage:
+      dbdeployer downloads [command]
+    
+    Available Commands:
+      add            Adds a tarball to the list
+      add-remote     Adds a tarball to the list, by searching MySQL downloads site 
+      add-url        Adds a URL containing a tarball to the list of tarballs
+      export         Exports the list of tarballs to a file
+      get            Downloads a remote tarball
+      get-by-version Downloads a remote tarball
+      get-unpack     Downloads and unpacks a remote tarball
+      import         Imports the list of tarballs from a file or URL
+      list           list remote tarballs
+      reset          Reset the custom list of tarballs and resume the defaults
+      show           Downloads a remote tarball
+      tree           Display a tree by version of remote tarballs
+    
+    Flags:
+      -h, --help   help for downloads
+    
+    
 
 
 ## Customizing the tarball list
@@ -716,7 +1030,44 @@ Several examples of dbdeployer usages are avaibale with the command `dbdeployer 
 
 
     $ dbdeployer cookbook list
-    # ERROR running dbdeployer cookbook list: exec: "dbdeployer": executable file not found in $PATH
+    .----------------------------------.-------------------------------------.---------------------------------------------------------------------------------------.--------.
+    |              recipe              |             script name             |                                      description                                      | needed |
+    |                                  |                                     |                                                                                       | flavor |
+    +----------------------------------+-------------------------------------+---------------------------------------------------------------------------------------+--------+
+    | admin                            | admin-single.sh                     | Single sandbox with admin address enabled                                             | mysql  |
+    | all-masters                      | all-masters-deployment.sh           | Creation of an all-masters replication sandbox                                        | mysql  |
+    | circular_replication             | circular-replication.sh             | Shows how to run replication between nodes of a multiple deployment                   | -      |
+    | custom-named-replication         | custom-named-replication.sh         | Replication sandbox with custom names for directories and scripts                     | -      |
+    | custom-users                     | single-custom-users.sh              | Single sandbox with custom users                                                      | mysql  |
+    | delete                           | delete-sandboxes.sh                 | Delete all deployed sandboxes                                                         | -      |
+    | fan-in                           | fan-in-deployment.sh                | Creation of a fan-in (many masters, one slave) replication sandbox                    | mysql  |
+    | group-multi                      | group-multi-primary-deployment.sh   | Creation of a multi-primary group replication sandbox                                 | mysql  |
+    | group-single                     | group-single-primary-deployment.sh  | Creation of a single-primary group replication sandbox                                | mysql  |
+    | master-slave                     | master-slave-deployment.sh          | Creation of a master/slave replication sandbox                                        | -      |
+    | ndb                              | ndb-deployment.sh                   | Shows deployment with ndb                                                             | ndb    |
+    | prerequisites                    | prerequisites.sh                    | Shows dbdeployer prerequisites and how to make them                                   | -      |
+    | pxc                              | pxc-deployment.sh                   | Shows deployment with pxc                                                             | pxc    |
+    | remote                           | remote.sh                           | Shows how to get a remote MySQL tarball                                               | -      |
+    | replication-operations           | repl-operations.sh                  | Show how to run operations in a replication sandbox                                   | -      |
+    | replication-restart              | repl-operations-restart.sh          | Show how to restart sandboxes with custom options                                     | -      |
+    | replication_between_groups       | replication-between-groups.sh       | Shows how to run replication between two group replications                           | mysql  |
+    | replication_between_master_slave | replication-between-master-slave.sh | Shows how to run replication between two master/slave replications                    | -      |
+    | replication_between_ndb          | replication-between-ndb.sh          | Shows how to run replication between two NDB clusters                                 | ndb    |
+    | replication_between_single       | replication-between-single.sh       | Shows how to run replication between two single sandboxes                             | -      |
+    | replication_group_master_slave   | replication-group-master-slave.sh   | Shows how to run replication between a group replication and master/slave replication | mysql  |
+    | replication_group_single         | replication-group-single.sh         | Shows how to run replication between a group replication and a single sandbox         | mysql  |
+    | replication_master_slave_group   | replication-master-slave-group.sh   | Shows how to run replication between master/slave replication and group replication   | mysql  |
+    | replication_multi_versions       | replication-multi-versions.sh       | Shows how to run replication between different MySQL versions                         | -      |
+    | replication_single_group         | replication-single-group.sh         | Shows how to run replication between a single sandbox an group replication            | mysql  |
+    | show                             | show-sandboxes.sh                   | Show deployed sandboxes                                                               | -      |
+    | single                           | single-deployment.sh                | Creation of a single sandbox                                                          | -      |
+    | single-reinstall                 | single-reinstall.sh                 | Re-installs a single sandbox                                                          | -      |
+    | skip-start-replication           | skip-start-replication.sh           | Replication sandbox deployed without starting the servers                             | -      |
+    | skip-start-single                | skip-start-single.sh                | Single sandbox deployed without starting the server                                   | -      |
+    | tidb                             | tidb-deployment.sh                  | Shows deployment and some operations with TiDB                                        | tidb   |
+    | upgrade                          | upgrade.sh                          | Shows a complete upgrade example from 5.5 to 8.0                                      | mysql  |
+    '----------------------------------'-------------------------------------'---------------------------------------------------------------------------------------'--------'
+    
 
 Using this command, dbdeployer can produce sample scripts for common operations.
 
@@ -759,7 +1110,24 @@ Here's an example.
 dbdeployer will detect the latest versions available in you system. If you don't have all the versions mentioned here, you should edit the script and use only the ones you want (such as 5.7.25 and 8.0.15).
 
     $ dbdeployer cookbook
-    # ERROR running dbdeployer cookbook: exec: "dbdeployer": executable file not found in $PATH
+    Shows practical examples of dbdeployer usages, by creating usage scripts.
+    
+    Usage:
+      dbdeployer cookbook [command]
+    
+    Aliases:
+      cookbook, recipes, samples
+    
+    Available Commands:
+      create      creates a script for a given recipe
+      list        Shows available dbdeployer samples
+      show        Shows the contents of a given recipe
+    
+    Flags:
+          --flavor string   For which flavor this recipe is
+      -h, --help            help for cookbook
+    
+    
 
 # Standard and non-standard basedir names
 
@@ -1154,7 +1522,93 @@ And you can list which sandboxes were already installed
 The command "usage" shows how to use the scripts that were installed with each sandbox.
 
     $ dbdeployer usage
-    # ERROR running dbdeployer usage: exec: "dbdeployer": executable file not found in $PATH
+    
+    	USING A SANDBOX
+    
+    Change directory to the newly created one (default: $SANDBOX_HOME/msb_VERSION 
+    for single sandboxes)
+    [ $SANDBOX_HOME = $HOME/sandboxes unless modified with flag --sandbox-home ]
+    
+    The sandbox directory of the instance you just created contains some handy 
+    scripts to manage your server easily and in isolation.
+    
+    "./start", "./status", "./restart", and "./stop" do what their name suggests. 
+    start and restart accept parameters that are eventually passed to the server. 
+    e.g.:
+    
+      ./start --server-id=1001
+    
+      ./restart --event-scheduler=disabled
+    
+    "./use" calls the command line client with the appropriate parameters,
+    Example:
+    
+        ./use -BN -e "select @@server_id"
+        ./use -u root
+    
+    "./clear" stops the server and removes everything from the data directory,
+    letting you ready to start from scratch. (Warning! It's irreversible!)
+    
+    "./send_kill [destroy]" does almost the same as "./stop", as it sends a SIGTERM (-15) kill
+    to shut down the server. Additionally, when the regular kill fails, it will
+    send an unfriendly SIGKILL (-9) to the unresponsive server.
+    The argument "destroy" will immediately kill the server with SIGKILL (-9).
+    
+    "./add_option" will add one or more options to my.sandbox.cnf, and restarts the
+    server to apply the changes.
+    
+    "init_db" and "load_grants" are used during the server initialization, and should not be used
+    in normal operations. They are nonetheless useful to see which operations were performed
+    to set up the server.
+    
+    "./show_binlog" and "./show_relaylog" will show the latest binary log or relay-log.
+    
+    "./my" is a prefix script to invoke any command named "my*" from the 
+    MySQL /bin directory. It is important to use it rather than the 
+    corresponding globally installed tool, because this guarantees 
+    that you will be using the tool for the version you have deployed.
+    Examples:
+    
+        ./my sqldump db_name
+        ./my sqlbinlog somefile
+    
+    "./mysqlsh" invokes the mysql shell. Unlike other commands, this one only works
+    if mysqlsh was installed, with preference to the binaries found in "basedir".
+    This script is created only if the X plugin was enabled (5.7.12+ with --enable-mysqlx
+    or 8.0.11+ without --disable-mysqlx)
+    
+    "./use_admin" is created when the sandbox is deployed with --enable-admin-address (8.0.14+)
+    and allows using the database as administrator, with a dedicated port.
+    
+     USING MULTIPLE SERVER SANDBOX
+    On a replication sandbox, you have the same commands (run "dbdeployer usage single"), 
+    with an "_all" suffix, meaning that you propagate the command to all the members. 
+    Then you have "./m" as a shortcut to use the master, "./s1" and "./s2" to access 
+    the slaves (and "s3", "s4" ... if you define more).
+    
+    In group sandboxes without a master slave relationship (group replication and 
+    multiple sandboxes) the nodes can be accessed by ./n1, ./n2, ./n3, and so on.
+    
+    start_all    [options] > starts all nodes
+    status_all             > get the status of all nodes
+    restart_all  [options] > restarts all nodes
+    stop_all               > stops all nodes
+    use_all         "SQL"  > runs a SQL statement in all nodes
+    use_all_masters "SQL"  > runs a SQL statement in all masters
+    use_all_slaves "SQL"   > runs a SQL statement in all slaves
+    clear_all              > stops all nodes and removes all data
+    m                      > invokes MySQL client in the master
+    s1, s2, n1, n2         > invokes MySQL client in slave 1, 2, node 1, 2
+    
+    The scripts "check_slaves" or "check_nodes" give the status of replication in the sandbox.
+    
+    When the sandbox is deployed with --enable-admin-address (8.0.14+) the following scripts
+    are also created:
+    
+    ma                    > invokes the MySQL client in the master as admin
+    sa1, sa2, na1, na2    > invokes MySQL client as admin in slave 1, 2, node 1, 2
+    use_all_admin "SQL"   > runs a SQL statement in all nodes as admin
+    
 
 Every sandbox has a file named `sbdescription.json`, containing important information on the sandbox. It is useful to determine where the binaries come from and on which conditions it was installed.
 
@@ -1201,7 +1655,48 @@ And for replication:
 You can run a command in several sandboxes at once, using the `global` command, which propagates your command to all the installed sandboxes.
 
     $ dbdeployer global -h 
-    # ERROR running dbdeployer global -h : exec: "dbdeployer": executable file not found in $PATH
+    This command can propagate the given action through all sandboxes.
+    
+    Usage:
+      dbdeployer global [command]
+    
+    Examples:
+    
+    	$ dbdeployer global use "select version()"
+    	$ dbdeployer global status
+    	$ dbdeployer global stop --version=5.7.27
+    	$ dbdeployer global stop --short-version=8.0
+    	$ dbdeployer global stop --short-version='!8.0' # or --short-version=no-8.0
+    	$ dbdeployer global status --port-range=5000-8099
+    	$ dbdeployer global start --flavor=percona
+    	$ dbdeployer global start --flavor='!percona' --type=single
+    	$ dbdeployer global metadata version --flavor='!percona' --type=single
+    	
+    
+    Available Commands:
+      exec             Runs a command in all sandboxes
+      metadata         Runs a metadata query in all sandboxes
+      restart          Restarts all sandboxes
+      start            Starts all sandboxes
+      status           Shows the status in all sandboxes
+      stop             Stops all sandboxes
+      test             Tests all sandboxes
+      test-replication Tests replication in all sandboxes
+      use              Runs a query in all sandboxes
+    
+    Flags:
+          --dry-run                Show what would be executed, without doing it
+          --flavor string          Runs command only in sandboxes of the given flavor
+      -h, --help                   help for global
+          --name string            Runs command only in sandboxes of the given name
+          --port string            Runs commands only in sandboxes containing the given port
+          --port-range string      Runs command only in sandboxes containing a port in the given range
+          --short-version string   Runs command only in sandboxes of the given short version
+          --type string            Runs command only in sandboxes of the given type
+          --verbose                Show what is matched when filters are used
+          --version string         Runs command only in sandboxes of the given version
+    
+    
 
 Using `global`, you can see the status, start, stop, restart, test all sandboxes, or run SQL and metadata queries.
 
@@ -1248,7 +1743,28 @@ Example: `$ dbdeployer global use "select @@server_id, @@port"`
 The sandboxes can also be deleted, either one by one or all at once:
 
     $ dbdeployer delete -h 
-    # ERROR running dbdeployer delete -h : exec: "dbdeployer": executable file not found in $PATH
+    Halts the sandbox (and its depending sandboxes, if any), and removes it.
+    Warning: this command is irreversible!
+    
+    Usage:
+      dbdeployer delete sandbox_name (or "ALL") [flags]
+    
+    Aliases:
+      delete, remove, destroy
+    
+    Examples:
+    
+    	$ dbdeployer delete msb_8_0_4
+    	$ dbdeployer delete rsandbox_5_7_21
+    
+    Flags:
+          --concurrent     Runs multiple deletion tasks concurrently.
+          --confirm        Requires confirmation.
+      -h, --help           help for delete
+          --skip-confirm   Skips confirmation with multiple deletions.
+          --use-stop       Use 'stop' instead of 'send_kill destroy' to halt the database servers
+    
+    
 
 You can lock one or more sandboxes to prevent deletion. Use this command to make the sandbox non-deletable.
 
@@ -1265,7 +1781,16 @@ The lock can also be reverted using
 You can set a default sandbox using the command `dbdeployer admin set-default sandbox_name`
 
     $ dbdeployer admin set-default -h
-    # ERROR running dbdeployer admin set-default -h: exec: "dbdeployer": executable file not found in $PATH
+    Sets a given sandbox as default, so that it can be used with $SANDBOX_HOME/default
+    
+    Usage:
+      dbdeployer admin set-default sandbox_name [flags]
+    
+    Flags:
+          --default-sandbox-executable string   Name of the executable to run commands in the default sandbox (default "default")
+      -h, --help                                help for set-default
+    
+    
 
 
 For example:
@@ -1319,7 +1844,22 @@ If that sandbox was stopped, this command will restart it.
 dbdeployer 1.10.0 introduces upgrades:
 
     $ dbdeployer admin upgrade -h
-    # ERROR running dbdeployer admin upgrade -h: exec: "dbdeployer": executable file not found in $PATH
+    Upgrades a sandbox to a newer version.
+    The sandbox with the new version must exist already.
+    The data directory of the old sandbox will be moved to the new one.
+    
+    Usage:
+      dbdeployer admin upgrade sandbox_name newer_sandbox [flags]
+    
+    Examples:
+    dbdeployer admin upgrade msb_8_0_11 msb_8_0_12
+    
+    Flags:
+          --dry-run   Shows upgrade operations, but don't execute them
+      -h, --help      help for upgrade
+          --verbose   Shows upgrade operations
+    
+    
 
 To perform an upgrade, the following conditions must be met:
 
@@ -1678,12 +2218,55 @@ fi
 ```
 
     $ dbdeployer info version -h
-    # ERROR running dbdeployer info version -h: exec: "dbdeployer": executable file not found in $PATH
+    Displays the latest version available for deployment.
+    If a short version is indicated (such as 5.7, or 8.0), only the versions belonging to that short
+    version are searched.
+    If "all" is indicated after the short version, displays all versions belonging to that short version.
+    
+    Usage:
+      dbdeployer info version [short-version|all] [all] [flags]
+    
+    Examples:
+    
+        # Shows the latest version available
+        $ dbdeployer info version
+        8.0.16
+    
+        # shows the latest version belonging to 5.7
+        $ dbdeployer info version 5.7
+        5.7.26
+    
+        # shows the latest version for every short version
+        $ dbdeployer info version all
+        5.0.96 5.1.73 5.5.53 5.6.41 5.7.26 8.0.16
+    
+        # shows all the versions for a given short version
+        $ dbdeployer info version 8.0 all
+        8.0.11 8.0.12 8.0.13 8.0.14 8.0.15 8.0.16
+    
+    
+    Flags:
+      -h, --help   help for version
+    
+    
 
 Similarly to `versions`, the `defaults` subcommand allows us to get dbdeployer metadata in a way that can be used in scripts
 
     $ dbdeployer info defaults -h
-    # ERROR running dbdeployer info defaults -h: exec: "dbdeployer": executable file not found in $PATH
+    Displays one field of the defaults.
+    
+    Usage:
+      dbdeployer info defaults field-name [flags]
+    
+    Examples:
+    
+    	$ dbdeployer info defaults master-slave-base-port 
+    
+    
+    Flags:
+      -h, --help   help for defaults
+    
+    
 
 For example
 
@@ -1810,7 +2393,17 @@ start slave
 ```
 
     $ dbdeployer import single --help
-    # ERROR running dbdeployer import single --help: exec: "dbdeployer": executable file not found in $PATH
+    Imports an existing (local or remote) server into a sandbox,
+    so that it can be used with the usual sandbox scripts.
+    Requires host, port, user, password.
+    
+    Usage:
+      dbdeployer import single host port user password [flags]
+    
+    Flags:
+      -h, --help   help for single
+    
+    
 
 
 # Cloning databases
@@ -1846,17 +2439,35 @@ Should you need to compile your own binaries for dbdeployer, follow these steps:
 Between this file and [the API API list](https://github.com/dbdeployer/dbdeployer/blob/master/docs/API/API-1.1.md), you have all the existing documentation for dbdeployer.
 Should you need additional formats, though, dbdeployer is able to generate them on-the-fly. Tou will need the docs-enabled binaries: in the distribution list, you will find:
 
-* dbdeployer-1.75.2-docs.linux.tar.gz
-* dbdeployer-1.75.2-docs.osx.tar.gz
-* dbdeployer-1.75.2.linux.tar.gz
-* dbdeployer-1.75.2.osx.tar.gz
+* dbdeployer-1.76.0-docs.linux.tar.gz
+* dbdeployer-1.76.0-docs.osx.tar.gz
+* dbdeployer-1.76.0.linux.tar.gz
+* dbdeployer-1.76.0.osx.tar.gz
 
 The executables containing `-docs` in their name have the same capabilities of the regular ones, but in addition they can run the *hidden* command `tree`, with alias `docs`.
 
 This is the command used to help generating the API documentation.
 
     $ dbdeployer-docs tree -h
-    # ERROR running dbdeployer-docs tree -h: exec: "dbdeployer-docs": executable file not found in $PATH
+    This command is only used to create API documentation. 
+    You can, however, use it to show the command structure at a glance.
+    
+    Usage:
+      dbdeployer tree [flags]
+    
+    Aliases:
+      tree, docs
+    
+    Flags:
+          --api               Writes API template
+          --bash-completion   creates bash-completion file
+      -h, --help              help for tree
+          --man-pages         Writes man pages
+          --markdown-pages    Writes Markdown docs
+          --rst-pages         Writes Restructured Text docs
+          --show-hidden       Shows also hidden commands
+    
+    
 
 In addition to the API template, the `tree` command can produce:
 
@@ -1904,7 +2515,21 @@ If you want to use dbdeployer from other applications, it may be useful to have 
 There is a command for that (since dbdeployer 1.28.0) that produces the commands and options information structure as a JSON structure.
 
     $ dbdeployer export -h
-    # ERROR running dbdeployer export -h: exec: "dbdeployer": executable file not found in $PATH
+    Exports the command line structure, with examples and flags, to a JSON structure.
+    If a command is given, only the structure of that command and below will be exported.
+    Given the length of the output, it is recommended to pipe it to a file or to another command.
+    
+    Usage:
+      dbdeployer export [command [sub-command]] [ > filename ] [ | command ]  [flags]
+    
+    Aliases:
+      export, dump
+    
+    Flags:
+          --force-output-to-terminal   display output to terminal regardless of pipes being used
+      -h, --help                       help for export
+    
+    
 
 # Semantic versioning
 
